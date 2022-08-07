@@ -103,7 +103,7 @@ class Kiwoom(QAxWidget):
         elif rqname == "opw00018_req":
             self._opw00018(rqname, trcode)
         elif rqname == "opt10075_req":
-            self._opt10075(rqname,trcode)
+            self._opt10075(rqname, trcode)
         try:
             self.tr_event_loop.exit()
         except AttributeError:
@@ -204,56 +204,26 @@ class Kiwoom(QAxWidget):
 
             self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
                                                   earning_rate])
-    def _opt10075(self,trcode, rqname):
-        account = self.accListComboBox.currentText()
+    '''
+    def reset_opt10075_output(self):
+        self.opt10075_output = {'no_che': [], 'che': []}
+    '''
+    def _opt10075(self, rqname, trcode):
+        data_cnt = self._get_repeat_cnt(trcode, rqname)
+        for i in range(data_cnt):
+            status = self._comm_get_data(trcode, "", rqname, i, "주문상태")
+            gubun = self._comm_get_data(trcode, "", rqname, i, "주문구분")
+            order_num = self._comm_get_data(trcode, "", rqname, i, "주문번호")
+            code = self._comm_get_data(trcode, "", rqname, i, "종목명")
+            price = self._comm_get_data(trcode, "", rqname, i, "체결가")
+            vol = self._comm_get_data(trcode, "", rqname, i, "주문수량")
+            order_price = self._comm_get_data(trcode, "", rqname, i, "주문가격")
+            yet_vol = self._comm_get_data(trcode, "", rqname, i, "미체결수량")
+            time = self._comm_get_data(trcode, "", rqname, i, "시간")
 
-        self.kiwoom.dynamicCall("SetInputValue(QString,QString)", "계좌번호", account)
-        self.kiwoom.dynamicCall("SetInputValue(QString,QString)", "체결구분", "1")
-        self.kiwoom.dynamicCall("SetInputValue(QString,QString)", "매매구분", "0")
-        self.kiwoom.dynamicCall("CommRqData(QString,QString, int, QString", "실시간미체결요청", "opt10075", 0, "5100")
-
-        rows = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
-        for i in range(rows):
-            code = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i, "종목코드")
-            code_nm = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i, "종목명")
-            order_no = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i, "주문번호")
-            order_status = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i,
-                                            "주문상태")  # 접수,확인,체결
-            order_quantity = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i,
-                                              "주문수량")
-            order_price = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i,
-                                           "주문가격")
-            order_gubun = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i,
-                                           "주문구분")  # -매도, +매수, -매도정정, +매수정정
-            not_quantity = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i,
-                                            "미체결수량")
-            ok_quantity = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, i,
-                                           "체결량")
-
-            code = code.strip()
-            code_nm = code_nm.strip()
-            order_no = int(order_no.strip())
-            order_status = order_status.strip()
-            order_quantity = int(order_quantity.strip())
-            order_price = int(order_price.strip())
-            order_gubun = order_gubun.strip().lstrip('+').lstrip('-')
-            not_quantity = int(not_quantity.strip())
-            ok_quantity = int(ok_quantity.strip())
-
-            if order_no in self.not_account_stock_dict:
-                pass
-            else:
-                self.not_account_stock_dict[order_no] = {}
-
-            self.not_account_stock_dict[order_no].update({'종목코드': code})
-            self.not_account_stock_dict[order_no].update({'종목명': code_nm})
-            self.not_account_stock_dict[order_no].update({'주문번호': order_no})
-            self.not_account_stock_dict[order_no].update({'주문상태': order_status})
-            self.not_account_stock_dict[order_no].update({'주문수량': order_quantity})
-            self.not_account_stock_dict[order_no].update({'주문가격': order_price})
-            self.not_account_stock_dict[order_no].update({'주문구분': order_gubun})
-            self.not_account_stock_dict[order_no].update({'미체결수량': not_quantity})
-            self.not_account_stock_dict[order_no].update({'체결량': ok_quantity})
+            # self.sig.signal()
+            print(status, gubun, order_num, code, vol, yet_vol, time, order_price)
+            self.opt10075_output['no_che'].append([status, gubun, order_num, code, vol, yet_vol, time, order_price, price])
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     kiwoom = Kiwoom()
