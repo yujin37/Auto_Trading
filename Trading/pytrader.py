@@ -24,8 +24,10 @@ class MyWindow(QMainWindow, form_class):
 
         self.kiwoom = Kiwoom()
         self.kiwoom.comm_connect()
+        self.get_code_list()
         #self.notTrade() #미체결 현황 실행
         #self.called() #계속 탐색 위한 과정?
+        #self.auto_run()
 
 
         self.timer = QTimer(self)
@@ -46,20 +48,20 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit_5.textChanged.connect(self.code_changed_2)
         self.pushButton.clicked.connect(self.send_order)
         self.pushButton_2.clicked.connect(self.check_balance)
-        self.pushButton_5.clicked.connect(self.like_list)
+        self.pushButton_3.clicked.connect(self.auto_run)
+        #self.pushButton_5.clicked.connect(self.like_list)
 
         self.load_buy_sell_list()
 
         #pymon 추가
-        self.get_code_list()
         self.pushButton_4.clicked.connect(self.like_list)
         #self.run()
     #코드 리스트 받아오기
+
     def get_code_list(self):
         self.kospi_codes = self.kiwoom.get_code_list_by_market(MARKET_KOSPI)
         self.kosdaq_codes = self.kiwoom.get_code_list_by_market(MARKET_KOSDAQ)
-    #주가 조회해주는 것. 근데 이렇게 하면 하나씩 받아오는데 어느세월에 해주지?
-    #호출 방식은 self.get_ohlcv("039490", "20170321") 근데 이건 일자별로잖아.
+
     def get_ohlcv(self, code, start):
         self.kiwoom.ohlcv = {'date': [], 'open': [], 'high': [], 'low': [], 'close': [], 'volume': []}
 
@@ -72,7 +74,50 @@ class MyWindow(QMainWindow, form_class):
         df = DataFrame(self.kiwoom.ohlcv, columns=['open', 'high', 'low', 'close', 'volume'],
                        index=self.kiwoom.ohlcv['date'])
         return df
-    #급등주 포착 알고리즘
+    def check_speedy_rising_volume(self, code):
+        today = datetime.datetime.today().strftime("%Y%m%d")
+        df = self.get_ohlcv(code, today)
+        volumes = df['volume']
+
+        if len(volumes) < 11:
+            return False
+
+        sum_vol20 = 0
+        today_vol = 0
+
+        for i, vol in enumerate(volumes):
+            if i == 0:
+                today_vol = vol
+            elif 1 <= i <= 10:
+                sum_vol20 += vol
+            else:
+                break
+
+        avg_vol20 = sum_vol20 / 10
+        if today_vol > avg_vol20 * 5:
+            return True
+
+    def update_buy_list(self, buy_list):
+        f = open("buy_list.txt", "wt")
+        for code in buy_list:
+            line = "매수;"+code+";시장가;10;0;매수전"+"\n"
+            f.writelines(line)
+            #f.writelines("매수;", code, ";시장가;10;0;매수전")
+        f.close()
+
+    def auto_run(self):
+        buy_list = []
+        num = len(self.kosdaq_codes)
+
+        for i, code in enumerate(self.kosdaq_codes):
+            print(i, '/', num)
+            if self.check_speedy_rising_volume(code):
+                buy_list.append(code)
+                print("급등주: ", code)
+                print(buy_list)
+            time.sleep(0.1)
+            self.update_buy_list(buy_list)
+    '''
     def check_speedy_rising_volume(self, code):
         today = datetime.datetime.today().strftime("%Y%m%d")
         df = self.get_ohlcv(code, today)
@@ -95,27 +140,42 @@ class MyWindow(QMainWindow, form_class):
         avg_vol20 = sum_vol20 / 20
         if today_vol > avg_vol20 * 10:
             return True
-    #buy list 업데이트
+
     def update_buy_list(self, buy_list):
         f = open("buy_list.txt", "wt")
         for code in buy_list:
             f.writelines("매수;", code, ";시장가;10;0;매수전")
         f.close()
 
-    def run(self):
+    def auto_run(self):
+        auto_type={'자동매매':"1"}
         buy_list = []
-        some_list=[]
-        num = len(self.kosdaq_codes)
+        some_list = []
         f = open("like_list.txt", "r", encoding='utf-8')
         while True:
-            line = f.readline()
+            line = f.readline().rstrip()
             if not line:
                 break
             some_list.append(line)
+            #print(some_list)
+        num = len(some_list)
         for code in some_list:
             if self.check_speedy_rising_volume(code):
                 buy_list.append(code)
+                print("hello")
         self.update_buy_list(buy_list)
+        
+        buy_list = []
+        num = len(self.kosdaq_codes)
+
+        for i, code in enumerate(self.kosdaq_codes):
+            #print(i, '/', num)
+            if self.check_speedy_rising_volume(code):
+                buy_list.append(code)
+            time.sleep(0.1)
+
+        self.update_buy_list(buy_list)
+    '''
     #관심 종목 리스트 작성
     def like_list(self):
         code = self.lineEdit_5.text()
@@ -189,10 +249,12 @@ class MyWindow(QMainWindow, form_class):
    #트레이딩 관련 파일 로드
     def load_buy_sell_list(self):
         f = open("buy_list.txt", 'rt',encoding='utf-8')
+        #f = open("buy_list.txt", 'rt', encoding='euc-kr')
         buy_list = f.readlines()
         f.close()
 
         f = open("sell_list.txt", 'rt',encoding='utf-8')
+        #f = open("sell_list.txt", 'rt', encoding='euc-kr')
         sell_list = f.readlines()
         f.close()
 
@@ -283,12 +345,12 @@ class MyWindow(QMainWindow, form_class):
 
         # balance
         item = QTableWidgetItem(self.kiwoom.d2_deposit)
-        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
         self.tableWidget.setItem(0, 0, item)
 
         for i in range(1, 6):
             item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
-            item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+            #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
             self.tableWidget.setItem(0, i, item)
 
         self.tableWidget.resizeRowsToContents()
@@ -301,7 +363,7 @@ class MyWindow(QMainWindow, form_class):
             row = self.kiwoom.opw00018_output['multi'][j]
             for i in range(len(row)):
                 item = QTableWidgetItem(row[i])
-                item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+                #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
