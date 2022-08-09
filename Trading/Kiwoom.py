@@ -84,11 +84,16 @@ class Kiwoom(QAxWidget):
         return ret
 
     def _receive_chejan_data(self, gubun, item_cnt, fid_list):
-        print(gubun)
-        print(self.get_chejan_data(9203))
-        print(self.get_chejan_data(302))
-        print(self.get_chejan_data(900))
-        print(self.get_chejan_data(901))
+        print(gubun, end=' ') #구분
+        print(self.get_chejan_data(9203), end=' ') #주문번호
+        print(self.get_chejan_data(302), end=' ') #종목명
+        print(self.get_chejan_data(900), end=' ') #주문수량
+        print(self.get_chejan_data(901)) #주문가격
+        #만약 체결모드이면서 매수 모드라면
+        if self.get_chejan_data(913) == '체결' and self.get_chejan_data(907) == '2':
+            f = open('sell_list.txt', 'wt', encoding='utf-8')
+            line = '매도'+self.get_chejan_data(9001)+';시장가;10;0'+'매도전;'+self.get_chejan_data(910)
+            f.write(line)
 
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':
@@ -224,6 +229,10 @@ class Kiwoom(QAxWidget):
             # self.sig.signal()
             print(status, gubun, order_num, code, vol, yet_vol, time, order_price)
             self.opt10075_output['no_che'].append([status, gubun, order_num, code, vol, yet_vol, time, order_price, price])
+    def _opt10006(self,code):
+        self.kiwoom.SetInputValue("종목코드", code)
+        self.kiwoom.CommRqData("OPT10006", "OPT10006", 0, "0101")
+        return self.kiwoom.ret_data['OPT10006']
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     kiwoom = Kiwoom()

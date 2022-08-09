@@ -445,7 +445,7 @@
       <x>70</x>
       <y>660</y>
       <width>1041</width>
-      <height>231</height>
+      <height>251</height>
      </rect>
     </property>
     <property name="title">
@@ -501,6 +501,19 @@
       </property>
      </column>
     </widget>
+    <widget class="QPushButton" name="pushButton_7">
+     <property name="geometry">
+      <rect>
+       <x>930</x>
+       <y>220</y>
+       <width>93</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>조회</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_5">
     <property name="geometry">
@@ -514,32 +527,30 @@
     <property name="title">
      <string>자동매매 방식</string>
     </property>
-    <widget class="QComboBox" name="comboBox_4">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>30</y>
-       <width>111</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <item>
-      <property name="text">
-       <string>급등주 포착</string>
-      </property>
-     </item>
-    </widget>
     <widget class="QPushButton" name="pushButton_3">
      <property name="geometry">
       <rect>
-       <x>140</x>
+       <x>20</x>
        <y>30</y>
        <width>93</width>
        <height>28</height>
       </rect>
      </property>
      <property name="text">
-      <string>적용</string>
+      <string>급등주 매수</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_5">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>30</y>
+       <width>93</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>매도</string>
      </property>
     </widget>
    </widget>
