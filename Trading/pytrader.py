@@ -106,24 +106,23 @@ class MyWindow(QMainWindow, form_class):
         #self.trade_stocks_done = False
         #self.timeout()
     #매도 조건을 위한 작업
-    def auto_profit(self):
+    def auto_profit(self,code):
+        today = datetime.datetime.today().strftime("%Y%m%d")
+        df = self.get_ohlcv(code, today) #open high low close volume
         '''
-        item_count = len(self.kiwoom.opw00018_output['multi'])
-        for i in range(item_count):
-            row = self.kiwoom.oopw00018_output['multi'][i]
-            for j in range(len(row)):
-                item = row[5]
-                if item > 10:
-                    f = open('sell_list.txt', 'w', encoding='utf-8')
-                    f.write(row[]) #여기서 종목명을 어떻게 코드로....
+        f=open('sell_list.txt','r', encoding='utf-8') #매수 가격을 기록한 파일을 읽어서.
+            line=f.readlines().split(';')
+            for i in range(len(line)): #줄을 읽어서.
+                if line[i][6]<=
         '''
     #자동매매 자동 호출 시스템
     def auto_run(self):
         buy_list = []
         num = len(self.kosdaq_codes)
-
+        sell_list=[]
         for i, code in enumerate(self.kosdaq_codes):
             print(i, '/', num)
+            #매수 알고리즘
             if self.check_speedy_rising_volume(code):
                 buy_list.append(code)
                 #확인 차원 출력, 나중에 삭제 예정
@@ -133,15 +132,18 @@ class MyWindow(QMainWindow, form_class):
                 time.sleep(0.5)
                 self.trade_stocks_done = False
                 self.timeout()
-
-
-
+            time.sleep(3.6)
+            #매도 알고리즘
             '''
             if self.auto_profit(code):
-                item_count = len(self.kiwoom.opw00018_output['multi'])
-                item=self.kiwoom.opw00018_output['multi']
+                sell_list.append(code)
+                self.update_sell_list(sell_list)
+                time.sleep(0.5)
+                self.trade_stocks_done = False
+                self.timeout()
+                
             '''
-            time.sleep(3.6)
+
 
     # -------------------------------------
 
@@ -291,8 +293,9 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0)
         current_time = QTime.currentTime()
         #print(current_time)
-        print(current_time, self.trade_stocks_done) #이건 작동 여부 보려고
+        #print(current_time, self.trade_stocks_done) #이건 작동 여부 보려고
         if current_time > market_start_time and self.trade_stocks_done == False:
+            #일단 여기서 확인해본바로는 마켓시간이 안맞는것 같아서 and를 or로 바꾸고 해봄.
             print('here') #여기는 장시간에 해야되어서.... 진입 여부 확인용
             self.trade_stocks() #여기가 안되는 것 같다.
             self.trade_stocks_done = True
