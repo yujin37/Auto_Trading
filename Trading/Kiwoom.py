@@ -90,10 +90,12 @@ class Kiwoom(QAxWidget):
         print(self.get_chejan_data(900), end=' ') #주문수량
         print(self.get_chejan_data(901)) #주문가격
         #만약 체결모드이면서 매수 모드라면
+        '''
         if self.get_chejan_data(913) == '체결' and self.get_chejan_data(907) == '2':
             f = open('sell_list.txt', 'wt', encoding='utf-8')
-            line = '매도'+self.get_chejan_data(9001)+';시장가;10;0'+'매도전;'+self.get_chejan_data(910)
+            line = '매도;'+self.get_chejan_data(9001)+';시장가;10;0'+'매도전;'+self.get_chejan_data(910)
             f.write(line)
+        '''
 
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':

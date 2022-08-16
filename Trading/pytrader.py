@@ -97,7 +97,7 @@ class MyWindow(QMainWindow, form_class):
             return True
 
     def update_buy_list(self, buy_list):
-        f = open("buy_list.txt", "w",encoding='utf-8')
+        f = open("buy_list.txt", "a+",encoding='utf-8')
         for code in buy_list:
             line = "매수;" + code + ";시장가;10;0;매수전" + "\n"
             f.writelines(line)
@@ -107,8 +107,10 @@ class MyWindow(QMainWindow, form_class):
         #self.timeout()
     #매도 조건을 위한 작업
     def auto_profit(self,code):
+        '''
         today = datetime.datetime.today().strftime("%Y%m%d")
         df = self.get_ohlcv(code, today) #open high low close volume
+        '''
         '''
         f=open('sell_list.txt','r', encoding='utf-8') #매수 가격을 기록한 파일을 읽어서.
             line=f.readlines().split(';')
@@ -127,11 +129,11 @@ class MyWindow(QMainWindow, form_class):
                 buy_list.append(code)
                 #확인 차원 출력, 나중에 삭제 예정
                 print("급등주: ", code)
-                print(buy_list)
                 self.update_buy_list(buy_list)
                 time.sleep(0.5)
                 self.trade_stocks_done = False
                 self.timeout()
+            buy_list.clear()
             time.sleep(3.6)
             #매도 알고리즘
             '''
@@ -149,7 +151,7 @@ class MyWindow(QMainWindow, form_class):
 
     # 트레이딩 관련 텍스트 파일 읽어주기
     def trade_stocks(self):
-        print('here')
+        #print('here1')
         hoga_lookup = {'지정가': "00", '시장가': "03"}
 
         f = open("buy_list.txt", 'rt', encoding='utf-8')
@@ -170,17 +172,20 @@ class MyWindow(QMainWindow, form_class):
             code = split_row_data[1]
             num = split_row_data[3]
             price = split_row_data[4]
-
-            if split_row_data[-1].rstrip() == '매수전':
-                time.sleep(0.5)
-                '''
+            buy = split_row_data[5].strip()
+            #print(buy)
+            time.sleep(0.5)
+            if buy == '매수전':
+                #print("매수 전 진입") #정상적으로 한번 진입하는 것을 확인
                 self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "")
+                '''
                 #매도 파일에 써주기
                 f = open('sell_list.txt', 'wt', encoding='utf-8')
                 line = '매도;'+code+';시장가;10;0;매도전;'+price # 매수가격인지 모르겠지만 아무튼 저장해서.
                 f.write(line)
                 '''
                 #time.sleep(0.5)
+
         # sell list
         for row_data in sell_list:
             split_row_data = row_data.split(';')
@@ -189,7 +194,7 @@ class MyWindow(QMainWindow, form_class):
             num = split_row_data[3]
             price = split_row_data[4]
             buy_price = split_row_data[5]
-
+            '''
             if split_row_data[-1].rstrip() == '매도전':
                 content = self.kiwoom.opt10006(code)
                 ch = content['Data'][0][1]
@@ -200,12 +205,12 @@ class MyWindow(QMainWindow, form_class):
                     line = '매도;' + code + ';시장가;10;0;매도완료'
                     f.write(line)
                     f.close()
-
+            '''
         # buy list
+        #여기는 여러번 진입하긴 하는데 실제로는 바꾸는 거기에 상관이 없을 것 같음.
         for i, row_data in enumerate(buy_list):
-            print('주문완료 진입')
             buy_list[i] = buy_list[i].replace("매수전", "주문완료")
-        self.trade_stocks_done = False
+            self.trade_stocks_done = False
 
         # file update
         f = open("buy_list.txt", 'wt', encoding='utf-8')
@@ -250,7 +255,7 @@ class MyWindow(QMainWindow, form_class):
 
             for i in range(len(split_row_data)):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
-                #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+                item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(j, i, item)
 
         # sell list
@@ -261,7 +266,7 @@ class MyWindow(QMainWindow, form_class):
 
             for i in range(len(split_row_data)):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
-                item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+                #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(len(buy_list) + j, i, item)
 
         self.tableWidget_3.resizeRowsToContents()
@@ -296,7 +301,7 @@ class MyWindow(QMainWindow, form_class):
         #print(current_time, self.trade_stocks_done) #이건 작동 여부 보려고
         if current_time > market_start_time and self.trade_stocks_done == False:
             #일단 여기서 확인해본바로는 마켓시간이 안맞는것 같아서 and를 or로 바꾸고 해봄.
-            print('here') #여기는 장시간에 해야되어서.... 진입 여부 확인용
+            #print('here') #여기는 장시간에 해야되어서.... 진입 여부 확인용
             self.trade_stocks() #여기가 안되는 것 같다.
             self.trade_stocks_done = True
 
