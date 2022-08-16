@@ -49,6 +49,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton.clicked.connect(self.send_order) #주문
         self.pushButton_2.clicked.connect(self.check_balance)
         self.pushButton_3.clicked.connect(self.auto_run) #자동매수 프로그램
+        #self.pushButton_5.clicked.connect(self.auto_run2) #자동매도 프로그램
         self.pushButton_6.clicked.connect(self.load_buy_sell_list) #자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade) # 미체결현황
 
@@ -95,6 +96,43 @@ class MyWindow(QMainWindow, form_class):
         avg_vol20 = sum_vol20 / 10
         if today_vol > avg_vol20 * 5:
             return True
+    def check_up_price(self,codes):
+
+        today = datetime.datetime.today().strftime("%Y%m%d")
+        df = self.get_ohlcv(codes, today)
+        price=df['close']
+
+        if len(price)<6:
+            return False
+        sum_pri5=0
+        today_pri=0
+        #일단 여기까지는 문제 없음.
+
+        for i, pri in enumerate(price):
+            if i==0:
+                today_pri=pri
+            elif 1<=i<=5:
+                sum_pri5+=pri
+            else:
+                break
+        #여기까지도 정상작동이고
+
+        f=open('sell_list.txt','rt',encoding='utf-8')
+        sell_list = f.readlines()
+        f.close()
+        global record
+        for row_data in sell_list:
+            split_row_data = row_data.split(';')
+            hoga = split_row_data[2]
+            code = split_row_data[1]
+            num = split_row_data[3]
+            price = split_row_data[4]
+            buy_price = split_row_data[5]
+            if codes==code:
+                record=buy_price
+            avg_pri=sum_pri5//5
+            if avg_pri>record*1.05: #여기서 매도 가능으로 바꾸어 주고 싶음.
+                return True
 
     def update_buy_list(self, buy_list):
         f = open("buy_list.txt", "a+",encoding='utf-8')
@@ -103,28 +141,42 @@ class MyWindow(QMainWindow, form_class):
             f.writelines(line)
             # f.writelines("매수;", code, ";시장가;10;0;매수전")
         f.close()
+    '''
+    def update_sell_list(self, sell_list):
+        f = open("sell_list.txt", "a+", encoding='utf-8')
+        for code in sell_list:
+            line = "매도;" + code + ";시장가;10;0;매도전" + "\n"
+            f.writelines(line)
+            f.close()
         #self.trade_stocks_done = False
         #self.timeout()
+    '''
     #매도 조건을 위한 작업
-    def auto_profit(self,code):
-        '''
-        today = datetime.datetime.today().strftime("%Y%m%d")
-        df = self.get_ohlcv(code, today) #open high low close volume
-        '''
-        '''
-        f=open('sell_list.txt','r', encoding='utf-8') #매수 가격을 기록한 파일을 읽어서.
-            line=f.readlines().split(';')
-            for i in range(len(line)): #줄을 읽어서.
-                if line[i][6]<=
-        '''
+    def auto_run2(self):
+        sell_list=[]
+        num=len(self.kosdaq_codes)
+        for i, code in enumerate(self.kosdaq_codes):
+            print(i, '/', num)
+            if self.check_up_price(code):
+                print('매도 알고리즘 진입')
+                sell_list.append(code)
+                #self.update_sell_list(sell_list)
+                time.sleep(0.5)
+                self.trade_stocks_done = False
+                self.timeout()
+
+            sell_list.clear()
+
+            time.sleep(3.6)
     #자동매매 자동 호출 시스템
     def auto_run(self):
         buy_list = []
-        num = len(self.kosdaq_codes)
         sell_list=[]
+        num = len(self.kosdaq_codes)
         for i, code in enumerate(self.kosdaq_codes):
             print(i, '/', num)
             #매수 알고리즘
+
             if self.check_speedy_rising_volume(code):
                 buy_list.append(code)
                 #확인 차원 출력, 나중에 삭제 예정
@@ -134,18 +186,19 @@ class MyWindow(QMainWindow, form_class):
                 self.trade_stocks_done = False
                 self.timeout()
             buy_list.clear()
-            time.sleep(3.6)
-            #매도 알고리즘
-            '''
-            if self.auto_profit(code):
-                sell_list.append(code)
-                self.update_sell_list(sell_list)
-                time.sleep(0.5)
-                self.trade_stocks_done = False
-                self.timeout()
-                
-            '''
+            time.sleep(0.5)
 
+            '''
+            elif i%2!=0:
+                if self.check_up_price(code):
+                    sell_list.append(code)
+                    self.update_sell_list(sell_list)
+                    time.sleep(0.5)
+                    self.trade_stocks_done = False
+                    self.timeout()
+                sell_list.clear()
+            time.sleep(3.6)
+            '''
 
     # -------------------------------------
 
@@ -178,6 +231,7 @@ class MyWindow(QMainWindow, form_class):
             if buy == '매수전':
                 #print("매수 전 진입") #정상적으로 한번 진입하는 것을 확인
                 self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "")
+
                 '''
                 #매도 파일에 써주기
                 f = open('sell_list.txt', 'wt', encoding='utf-8')
@@ -185,7 +239,11 @@ class MyWindow(QMainWindow, form_class):
                 f.write(line)
                 '''
                 #time.sleep(0.5)
-
+        # buy list
+        # 여기는 여러번 진입하긴 하는데 실제로는 바꾸는 거기에 상관이 없을 것 같음.
+        for i, row_data in enumerate(buy_list):
+            buy_list[i] = buy_list[i].replace("매수전", "주문완료")
+            self.trade_stocks_done = False
         # sell list
         for row_data in sell_list:
             split_row_data = row_data.split(';')
@@ -194,23 +252,11 @@ class MyWindow(QMainWindow, form_class):
             num = split_row_data[3]
             price = split_row_data[4]
             buy_price = split_row_data[5]
-            '''
-            if split_row_data[-1].rstrip() == '매도전':
-                content = self.kiwoom.opt10006(code)
-                ch = content['Data'][0][1]
-                time.sleep(0.5)
-                if buy_price*0.05<=ch: #샀던 가격보다 5%정도 이상 크다면 주문 넣기
-                    self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "")
-                    f = open('sell_finish.txt', 'wt', encoding='utf-8')
-                    line = '매도;' + code + ';시장가;10;0;매도완료'
-                    f.write(line)
-                    f.close()
-            '''
-        # buy list
-        #여기는 여러번 진입하긴 하는데 실제로는 바꾸는 거기에 상관이 없을 것 같음.
-        for i, row_data in enumerate(buy_list):
-            buy_list[i] = buy_list[i].replace("매수전", "주문완료")
-            self.trade_stocks_done = False
+            buy = split_row_data[6].strip()
+        time.sleep(0.5)
+        if buy == '매도전':
+            self.kiwoom.send_order("send_order_req", "0101", account, 0, code, num, price, hoga_lookup[hoga], "")
+
 
         # file update
         f = open("buy_list.txt", 'wt', encoding='utf-8')
