@@ -88,14 +88,14 @@ class Kiwoom(QAxWidget):
         print(self.get_chejan_data(9203), end=' ') #주문번호
         print(self.get_chejan_data(302), end=' ') #종목명
         print(self.get_chejan_data(900), end=' ') #주문수량
-        print(self.get_chejan_data(901)) #주문가격
-        #만약 체결모드이면서 매수 모드라면
-        '''
-        if self.get_chejan_data(913) == '체결' and self.get_chejan_data(907) == '2':
-            f = open('sell_list.txt', 'wt', encoding='utf-8')
-            line = '매도;'+self.get_chejan_data(9001)+';시장가;10;0'+'매도전;'+self.get_chejan_data(910)
-            f.write(line)
-        '''
+
+        #매도 준비를 위한 작업
+        type_code=self.get_chejan_data(9001) #종목 코드
+        type_price=self.get_chejan_data(910) #체결 가격
+        f=open('sell_list','at',encoding='utf-8') #매도 파일
+        message='매도;'+type_code+';시장가;10;0;매도전;'+type_price
+        f.write(message)
+        f.close
 
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':
@@ -109,8 +109,10 @@ class Kiwoom(QAxWidget):
             self._opw00001(rqname, trcode)
         elif rqname == "opw00018_req":
             self._opw00018(rqname, trcode)
+        '''
         elif rqname == "opt10075_req":
             self._opt10075(rqname, trcode)
+        '''
         try:
             self.tr_event_loop.exit()
         except AttributeError:
@@ -209,28 +211,11 @@ class Kiwoom(QAxWidget):
             eval_profit_loss_price = Kiwoom.change_format(eval_profit_loss_price)
             earning_rate = Kiwoom.change_format2(earning_rate)
 
-            self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
-                                                  earning_rate])
-    '''
-    def reset_opt10075_output(self):
-        self.opt10075_output = {'no_che': [], 'che': []}
-    '''
-    def _opt10075(self, rqname, trcode):
-        data_cnt = self._get_repeat_cnt(trcode, rqname)
-        for i in range(data_cnt):
-            status = self._comm_get_data(trcode, "", rqname, i, "주문상태")
-            gubun = self._comm_get_data(trcode, "", rqname, i, "주문구분")
-            order_num = self._comm_get_data(trcode, "", rqname, i, "주문번호")
-            code = self._comm_get_data(trcode, "", rqname, i, "종목명")
-            price = self._comm_get_data(trcode, "", rqname, i, "체결가")
-            vol = self._comm_get_data(trcode, "", rqname, i, "주문수량")
-            order_price = self._comm_get_data(trcode, "", rqname, i, "주문가격")
-            yet_vol = self._comm_get_data(trcode, "", rqname, i, "미체결수량")
-            time = self._comm_get_data(trcode, "", rqname, i, "시간")
+            self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,earning_rate])
+    #미체결 현황 관련 코드, notTrade함수와 연결됨.
+    #def _opt10075(self,rqname,trcode):
 
-            # self.sig.signal()
-            print(status, gubun, order_num, code, vol, yet_vol, time, order_price)
-            #self.opt10075_output['no_che'].append([status, gubun, order_num, code, vol, yet_vol, time, order_price, price])
+
     def _opt10006(self,code):
         self.kiwoom.SetInputValue("종목코드", code)
         self.kiwoom.CommRqData("OPT10006", "OPT10006", 0, "0101")

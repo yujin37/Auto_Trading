@@ -51,10 +51,11 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_3.clicked.connect(self.auto_run)  # 자동매수 프로그램
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
-        self.pushButton_7.clicked.connect(self.Trade)  # 미체결현황
+        self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
         # self.notTrade()  # 미체결 현황 실행
+
 
     # 코드 리스트 받아오기
     def get_code_list(self):
@@ -357,15 +358,8 @@ class MyWindow(QMainWindow, form_class):
     # 미체결 현황 조회
     def notTrade(self):
         print('not trade 진입')
-        '''
-        self.kiwoom.comm_rq_data("opt10075_req", "opt10075", 0, "0101")
-        nt_data = self.kiwoom.not_account_stock_dict
-        split_nt_data = nt_data.split(';')
-        for i in range(len(split_nt_data)):
-            item = QTableWidgetItem(split_nt_data[i].rstrip())
-            item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
-            self.tableWidget_4.setItem(i, item)
-        '''
+
+
     def Trade(self):
         time.sleep(5)
         print('trade 진입')
