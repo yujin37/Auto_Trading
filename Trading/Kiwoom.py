@@ -230,7 +230,7 @@ class Kiwoom(QAxWidget):
 
             # self.sig.signal()
             print(status, gubun, order_num, code, vol, yet_vol, time, order_price)
-            self.opt10075_output['no_che'].append([status, gubun, order_num, code, vol, yet_vol, time, order_price, price])
+            #self.opt10075_output['no_che'].append([status, gubun, order_num, code, vol, yet_vol, time, order_price, price])
     def _opt10006(self,code):
         self.kiwoom.SetInputValue("종목코드", code)
         self.kiwoom.CommRqData("OPT10006", "OPT10006", 0, "0101")

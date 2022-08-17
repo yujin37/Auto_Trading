@@ -449,58 +449,8 @@
      </rect>
     </property>
     <property name="title">
-     <string>체결 현황</string>
+     <string>체결 조회</string>
     </property>
-    <widget class="QTableWidget" name="tableWidget_4">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>1011</width>
-       <height>192</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string>종목코드</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>주문번호</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>주문상태</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>주문수량</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>주문가격</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>주문구분</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>미체결수량</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>체결량</string>
-      </property>
-     </column>
-    </widget>
     <widget class="QPushButton" name="pushButton_7">
      <property name="geometry">
       <rect>
@@ -512,6 +462,52 @@
      </property>
      <property name="text">
       <string>조회</string>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tableWidget_4">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>50</y>
+       <width>401</width>
+       <height>192</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tableWidget_5">
+     <property name="geometry">
+      <rect>
+       <x>510</x>
+       <y>50</y>
+       <width>401</width>
+       <height>192</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_10">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>미체결 현황</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>510</x>
+       <y>30</y>
+       <width>64</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>체결 현황</string>
      </property>
     </widget>
    </widget>
