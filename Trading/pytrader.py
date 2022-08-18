@@ -7,6 +7,7 @@ import time
 # pymon 추가
 from pandas import DataFrame
 import datetime
+import csv #csv 파일 읽기
 
 # import type
 # import updown
@@ -26,6 +27,21 @@ class MyWindow(QMainWindow, form_class):
 
         self.kiwoom = Kiwoom()
         self.kiwoom.comm_connect()
+        #----------------
+        '''
+        self.kiwoom.GetConditionLoad()
+
+        # 전체 조건식 리스트 얻기
+        conditions = self.kiwoom.GetConditionNameList()
+
+        # 0번 조건식에 해당하는 종목 리스트 출력
+        condition_index = conditions[0][0]
+        condition_name = conditions[0][1]
+        codes = self.kiwoom.SendCondition("0101", condition_name, condition_index, 0)
+        print(codes)
+        self.update_buy_list(codes)
+        '''
+        #---------------------
         self.get_code_list()
         # self.called() #계속 탐색 위한 과정?
         # self.auto_run()
@@ -99,10 +115,104 @@ class MyWindow(QMainWindow, form_class):
         if today_vol > avg_vol20 * 5:
             return True
 
+    def check_up(self,code):
+        #code는 비율에 성립하는지 비교해보는 코드
+        #sell_write=[] #이건 그냥 매도에 쓸 내용
+        #이건 잔고 현황 가져오는 것
+        self.kiwoom.reset_opw00018_output()
+        account_number = self.kiwoom.get_login_info("ACCNO")
+        account_number = account_number.split(';')[0]
+
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+
+        while self.kiwoom.remained_data:
+            # time.sleep(0.5)
+            self.kiwoom.set_input_value("계좌번호", account_number)
+            self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+
+        #여기는 코드 네임 가져오는 것
+        f=open('code_name.csv', 'r',encoding='utf-8')
+        read=csv.reader(f)
+        global message
+        #-----------여기까지는 에러가 없음.
+        for j in range(item_count): #이건 아이템 전체 줄
+            row = self.kiwoom.opw00018_output['multi'][j]#여기는 각 줄에 대한 내용
+            name=row[0] #종목명
+            profit=row[5] #수익률
+            #print(name,profit) #여기까지는 문제가 없는 것 같다.
+            #print(float(profit))
+
+            if float(profit)>(-1.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
+                #print(name) #종목명 까지는 에러가 없는데
+                for line in read:
+                    if name==line[1]:
+                        print(name, line[0])
+                        message='True'
+                        '''
+                        if code==line[0]:
+                            message='True'
+                            break
+                        '''
+        f.close()
+        if message=='True':
+            return True
+        else:
+            return False
+
+        '''
+        if message=='True':
+            return True
+        else:
+            return False
+        '''
+
+    '''
+    def check_up(self,code):
+        print('매도 알고리즘 진입')
+        today = datetime.datetime.today().strftime("%Y%m%d")
+        df = self.get_ohlcv(code, today)
+        closes = df['close']
+        #비교 단위를 현재가로 5일간 비교
+        if len(closes) < 6:
+            return False
+
+        sum_cls5 = 0
+        today_cls = 0
+
+        for i, cls in enumerate(closes):
+            if i == 0:
+                today_cls = cls
+            elif 1 <= i <= 5:
+                sum_cls5 += cls
+            else:
+                break
+        avg_cls5=sum_cls5/5
+        #구매 가격 가져오기
+        f = open("sb_list.txt", 'rt', encoding='utf-8')
+        sell_list = f.readlines()
+        f.close()
+        buy_price=0
+        for row_data in sell_list:
+            split_row_data = row_data.split(';')
+            codes = split_row_data[1]
+            buy_prices = split_row_data[6].strip()
+            if codes==code:
+                buy_price=buy_prices
+        if today_cls>avg_cls5*5 and today_cls>buy_price:
+            return True
+    '''
     def update_buy_list(self, buy_list):
         f = open("buy_list.txt", "a+", encoding='utf-8')
         for code in buy_list:
-            line = "매수;" + code + ";시장가;10;0;매수전" + "\n"
+            line = "매수;" + code + ";시장가;1;0;매수전" + "\n"
+            f.writelines(line)
+        f.close()
+    def update_sell_list(self, buy_list):
+        f = open("sell_list.txt", "a+", encoding='utf-8')
+        for code in buy_list:
+            line = "매도;" + code + ";시장가;10;0;매도전" + "\n"
             f.writelines(line)
         f.close()
 
@@ -124,16 +234,20 @@ class MyWindow(QMainWindow, form_class):
                 self.timeout()
             buy_list.clear()
             time.sleep(3.6)
-            # 매도 알고리즘
-            '''
-            if self.auto_profit(code):
+            # 매도 알고리즘, 이걸 코드 실행 기준을 파일 내에 있다고 할 때 해야 하나. 난감.
+
+            if self.check_up(code):
                 sell_list.append(code)
+                print("상승주: ",code)
                 self.update_sell_list(sell_list)
                 time.sleep(0.5)
                 self.trade_stocks_done = False
                 self.timeout()
+                print('매도 알고리즘 내 진입')
+            sell_list.clear()
 
-            '''
+            print('매도 도는중')
+            time.sleep(3.6)
 
     # -------------------------------------
 
@@ -166,14 +280,6 @@ class MyWindow(QMainWindow, form_class):
             if buy == '매수전':
                 # print("매수 전 진입") #정상적으로 한번 진입하는 것을 확인
                 self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "")
-                '''
-                #매도 파일에 써주기
-                f = open('sell_list.txt', 'wt', encoding='utf-8')
-                line = '매도;'+code+';시장가;10;0;매도전;'+price # 매수가격인지 모르겠지만 아무튼 저장해서.
-                f.write(line)
-                '''
-                # time.sleep(0.5)
-
         # sell list
         for row_data in sell_list:
             split_row_data = row_data.split(';')
@@ -181,23 +287,22 @@ class MyWindow(QMainWindow, form_class):
             code = split_row_data[1]
             num = split_row_data[3]
             price = split_row_data[4]
-            buy_price = split_row_data[5]
-            '''
-            if split_row_data[-1].rstrip() == '매도전':
-                content = self.kiwoom.opt10006(code)
-                ch = content['Data'][0][1]
-                time.sleep(0.5)
-                if buy_price*0.05<=ch: #샀던 가격보다 5%정도 이상 크다면 주문 넣기
-                    self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "")
-                    f = open('sell_finish.txt', 'wt', encoding='utf-8')
-                    line = '매도;' + code + ';시장가;10;0;매도완료'
-                    f.write(line)
-                    f.close()
-            '''
+            buy_price = split_row_data[6]
+            buy = split_row_data[5].strip()
+            # print(buy)
+            time.sleep(0.5)
+            if buy == '매도전':
+                print("매도 전 진입")
+                #매도 주문 하기 위해 현재가를 비교하고 나서 주문넣기
+                self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "")
         # buy list
         # 여기는 여러번 진입하긴 하는데 실제로는 바꾸는 거기에 상관이 없을 것 같음.
         for i, row_data in enumerate(buy_list):
             buy_list[i] = buy_list[i].replace("매수전", "주문완료")
+            self.trade_stocks_done = False
+        #sell list
+        for i, row_data in enumerate(sell_list):
+            sell_list[i] = sell_list[i].replace("매도전", "주문완료")
             self.trade_stocks_done = False
 
         # file update
@@ -241,7 +346,7 @@ class MyWindow(QMainWindow, form_class):
 
             for i in range(len(split_row_data)):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
-                item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+                #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(j, i, item)
 
         # sell list
@@ -252,7 +357,7 @@ class MyWindow(QMainWindow, form_class):
 
             for i in range(len(split_row_data)):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
-                # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+                #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(len(buy_list) + j, i, item)
 
         self.tableWidget_3.resizeRowsToContents()
@@ -355,11 +460,11 @@ class MyWindow(QMainWindow, form_class):
 
         self.tableWidget_2.resizeRowsToContents()
 
-    # 미체결 현황 조회
+    # 미체결 현황 조회, nt_list.txt, 이제 주문 들어가면 미체결, 체결 알림시 삭제
     def notTrade(self):
         print('not trade 진입')
 
-
+    #체결 현황 조회, t_list.txt, 체결 알림이 뜨게 되면 추가를 해줌. 날짜 다르면 삭제 기능도?
     def Trade(self):
         time.sleep(5)
         print('trade 진입')

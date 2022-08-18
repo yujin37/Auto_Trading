@@ -88,14 +88,15 @@ class Kiwoom(QAxWidget):
         print(self.get_chejan_data(9203), end=' ') #주문번호
         print(self.get_chejan_data(302), end=' ') #종목명
         print(self.get_chejan_data(900), end=' ') #주문수량
-
+        '''
         #매도 준비를 위한 작업
         type_code=self.get_chejan_data(9001) #종목 코드
         type_price=self.get_chejan_data(910) #체결 가격
-        f=open('sell_list','at',encoding='utf-8') #매도 파일
+        f=open('sb_list','at',encoding='utf-8') #매도 파일
         message='매도;'+type_code+';시장가;10;0;매도전;'+type_price
         f.write(message)
         f.close
+        '''
 
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':
