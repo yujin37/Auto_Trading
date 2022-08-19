@@ -115,7 +115,7 @@ class MyWindow(QMainWindow, form_class):
         if today_vol > avg_vol20 * 5:
             return True
 
-    def check_up(self,code):
+    def check_up(self):
         #code는 비율에 성립하는지 비교해보는 코드
         #sell_write=[] #이건 그냥 매도에 쓸 내용
         #이건 잔고 현황 가져오는 것
@@ -135,31 +135,26 @@ class MyWindow(QMainWindow, form_class):
         #여기는 코드 네임 가져오는 것
         f=open('code_name.csv', 'r',encoding='utf-8')
         read=csv.reader(f)
-        global message
+        #global message
         #-----------여기까지는 에러가 없음.
+        code_name=[]
+        sell_list=[]
         for j in range(item_count): #이건 아이템 전체 줄
             row = self.kiwoom.opw00018_output['multi'][j]#여기는 각 줄에 대한 내용
             name=row[0] #종목명
             profit=row[5] #수익률
             #print(name,profit) #여기까지는 문제가 없는 것 같다.
             #print(float(profit))
-
             if float(profit)>(-1.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
-                #print(name) #종목명 까지는 에러가 없는데
-                for line in read:
-                    if name==line[1]:
-                        print(name, line[0])
-                        message='True'
-                        '''
-                        if code==line[0]:
-                            message='True'
-                            break
-                        '''
+                code_name.append(name)
+        #for i in code_name:
+            #여기서 코드 이름과 종목 이름 비교가 안된다. code_name[i]와 read에 있는 [1]번째 비교
+        #print(code_name)
+        #print('이름: ',code_name )
+        print(sell_list)
         f.close()
-        if message=='True':
-            return True
-        else:
-            return False
+        #update_sell_list(sell_list)
+        return sell_list
 
         '''
         if message=='True':
@@ -236,14 +231,14 @@ class MyWindow(QMainWindow, form_class):
             time.sleep(3.6)
             # 매도 알고리즘, 이걸 코드 실행 기준을 파일 내에 있다고 할 때 해야 하나. 난감.
 
-            if self.check_up(code):
-                sell_list.append(code)
-                print("상승주: ",code)
-                self.update_sell_list(sell_list)
-                time.sleep(0.5)
-                self.trade_stocks_done = False
-                self.timeout()
-                print('매도 알고리즘 내 진입')
+            sell_list=self.check_up()
+            print("상승주: ",sell_list)
+
+            self.update_sell_list(sell_list)
+            time.sleep(0.5)
+            self.trade_stocks_done = False
+            self.timeout()
+            #print('매도 알고리즘 내 진입')
             sell_list.clear()
 
             print('매도 도는중')
