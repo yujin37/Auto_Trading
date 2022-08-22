@@ -158,6 +158,7 @@ class MyWindow(QMainWindow, form_class):
                 buy_list.append(code)
                 # 확인 차원 출력, 나중에 삭제 예정
                 print("급등주: ", code)
+                print('타입', type(code))
                 self.update_buy_list(buy_list)
                 time.sleep(0.5)
                 self.trade_stocks_done = False
@@ -211,7 +212,6 @@ class MyWindow(QMainWindow, form_class):
 
             if sell == '매도전':
                 #print("매도 전 진입")
-
                 self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "")
         # buy list
         for i, row_data in enumerate(buy_list):
@@ -294,13 +294,11 @@ class MyWindow(QMainWindow, form_class):
     # 타임아웃 코드
     def timeout(self):
         # 여기까지는 진입하는데.....
-        market_start_time = QTime(9, 0, 0)
-        market_end_time = QTime(15, 30, 0)
+        market_start_time = QTime(9, 0, 0) #장오픈
+        market_end_time = QTime(15, 30, 0) #장마감
         current_time = QTime.currentTime()
         if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False: #장시간에만
         #if current_time > market_start_time and self.trade_stocks_done == False: #이건 실험용
-            # 일단 여기서 확인해본바로는 마켓시간이 안맞는것 같아서 and를 or로 바꾸고 해봄.
-            # print('here') #여기는 장시간에 해야되어서.... 진입 여부 확인용
             self.trade_stocks()  # 여기가 안되는 것 같다.
             self.trade_stocks_done = True
 
@@ -314,7 +312,6 @@ class MyWindow(QMainWindow, form_class):
             state_msg = "서버 미 연결 중"
 
         self.statusbar.showMessage(state_msg + " | " + time_msg)
-        # 여기까지는 오류 없이 온다는 얘긴데
 
     # 체크박스 타임아웃
     def timeout2(self):
