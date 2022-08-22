@@ -341,12 +341,12 @@
        </property>
        <column>
         <property name="text">
-         <string>종목명</string>
+         <string>종목코드</string>
         </property>
        </column>
        <column>
         <property name="text">
-         <string>보유량</string>
+         <string>종목명</string>
         </property>
        </column>
        <column>

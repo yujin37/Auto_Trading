@@ -7,6 +7,7 @@ import time
 # pymon 추가
 from pandas import DataFrame
 import datetime
+import re
 import csv #csv 파일 읽기
 
 # import type
@@ -119,6 +120,7 @@ class MyWindow(QMainWindow, form_class):
         #code는 비율에 성립하는지 비교해보는 코드
         #sell_write=[] #이건 그냥 매도에 쓸 내용
         #이건 잔고 현황 가져오는 것
+        print('진입여부')
         self.kiwoom.reset_opw00018_output()
         account_number = self.kiwoom.get_login_info("ACCNO")
         account_number = account_number.split(';')[0]
@@ -131,30 +133,55 @@ class MyWindow(QMainWindow, form_class):
             self.kiwoom.set_input_value("계좌번호", account_number)
             self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
         item_count = len(self.kiwoom.opw00018_output['multi'])
-
+        print('여기 while문')
+        #print('여기까지 안오나?')
         #여기는 코드 네임 가져오는 것
-        f=open('code_name.csv', 'r',encoding='utf-8')
-        read=csv.reader(f)
+        #f=open('code_name.csv', 'r',encoding='utf-8-sig')
+        #read=csv.reader(f)
+        #reads=list(read) #그냥 상태일 때는 이것도 안나오고.....
+        #print(reads)
+        #print('이 파일 리스트 변환 에러임?')
         #global message
         #-----------여기까지는 에러가 없음.
-        code_name=[]
+        #code_name=[]
+        #print(code_name)
         sell_list=[]
+        sell_lists=[]
+        #print('아이템 진입')
         for j in range(item_count): #이건 아이템 전체 줄
             row = self.kiwoom.opw00018_output['multi'][j]#여기는 각 줄에 대한 내용
-            name=row[0] #종목명
-            profit=row[5] #수익률
-            #print(name,profit) #여기까지는 문제가 없는 것 같다.
+            type_code=row[0]
+            name=row[1] #종목명
+            profit=row[6] #수익률
+            #print(type_code,name,profit) #여기까지는 문제가 없는 것 같다.
             #print(float(profit))
-            if float(profit)>(-1.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
-                code_name.append(name)
-        #for i in code_name:
-            #여기서 코드 이름과 종목 이름 비교가 안된다. code_name[i]와 read에 있는 [1]번째 비교
+            if float(profit)>(-10.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
+                #print(type_code, name)
+                sell_list.append(type_code)
+        #print('아이템 정리')
         #print(code_name)
-        #print('이름: ',code_name )
-        print(sell_list)
-        f.close()
+        #print('수익률 판단 후')
+        for i in sell_list:
+            n=re.sub(",","",i)
+            sell_lists.append(n)
+        '''
+        for i in range(len(code_name)):
+            print(code_name[i]) #아래 for 문에서 문제가 있는듯.
+            for line in reads:
+                if code_name[i] in line[1]:
+                    sell_list.append(line[0])
+                    break
+        '''
+        #sell_list=sell_lists
+        print(sell_lists)
+        #f.close()
+        self.update_sell_list(sell_lists)
+        time.sleep(0.5)
+        self.trade_stocks_done = False
+        self.timeout()
+        sell_lists.clear()
         #update_sell_list(sell_list)
-        return sell_list
+        return True
 
         '''
         if message=='True':
@@ -204,10 +231,10 @@ class MyWindow(QMainWindow, form_class):
             line = "매수;" + code + ";시장가;1;0;매수전" + "\n"
             f.writelines(line)
         f.close()
-    def update_sell_list(self, buy_list):
+    def update_sell_list(self, sell_list):
         f = open("sell_list.txt", "a+", encoding='utf-8')
-        for code in buy_list:
-            line = "매도;" + code + ";시장가;10;0;매도전" + "\n"
+        for code in sell_list:
+            line = "매도;" + code + ";시장가;1;0;매도전" + "\n"
             f.writelines(line)
         f.close()
 
@@ -215,7 +242,7 @@ class MyWindow(QMainWindow, form_class):
     def auto_run(self):
         buy_list = []
         num = len(self.kosdaq_codes)
-        sell_list = []
+        #sell_list = []
         for i, code in enumerate(self.kosdaq_codes):
             print(i, '/', num)
             # 매수 알고리즘
@@ -230,19 +257,20 @@ class MyWindow(QMainWindow, form_class):
             buy_list.clear()
             time.sleep(3.6)
             # 매도 알고리즘, 이걸 코드 실행 기준을 파일 내에 있다고 할 때 해야 하나. 난감.
+            #print('중간')
+            #sell_list=self.check_up
+            if self.check_up():
+                print("여기")
+                #time.sleep(0.5)
+                #self.trade_stocks_done = False
+                #self.timeout()
+            #time.sleep(0.5)
+            #print("상승주: ",sell_list)
 
-            sell_list=self.check_up()
-            print("상승주: ",sell_list)
-
-            self.update_sell_list(sell_list)
-            time.sleep(0.5)
-            self.trade_stocks_done = False
-            self.timeout()
+            #self.update_sell_list(sell_list)
             #print('매도 알고리즘 내 진입')
-            sell_list.clear()
-
-            print('매도 도는중')
             time.sleep(3.6)
+            print("끝")
 
     # -------------------------------------
 
