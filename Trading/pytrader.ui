@@ -533,20 +533,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>급등주 매수</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_5">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>30</y>
-       <width>93</width>
-       <height>28</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>매도</string>
+      <string>자체 코드</string>
      </property>
     </widget>
    </widget>

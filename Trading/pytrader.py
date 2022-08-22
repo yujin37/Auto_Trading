@@ -8,10 +8,6 @@ import time
 from pandas import DataFrame
 import datetime
 import re
-import csv #csv 파일 읽기
-
-# import type
-# import updown
 MARKET_KOSPI = 0
 MARKET_KOSDAQ = 10
 
@@ -28,24 +24,7 @@ class MyWindow(QMainWindow, form_class):
 
         self.kiwoom = Kiwoom()
         self.kiwoom.comm_connect()
-        #----------------
-        '''
-        self.kiwoom.GetConditionLoad()
-
-        # 전체 조건식 리스트 얻기
-        conditions = self.kiwoom.GetConditionNameList()
-
-        # 0번 조건식에 해당하는 종목 리스트 출력
-        condition_index = conditions[0][0]
-        condition_name = conditions[0][1]
-        codes = self.kiwoom.SendCondition("0101", condition_name, condition_index, 0)
-        print(codes)
-        self.update_buy_list(codes)
-        '''
-        #---------------------
         self.get_code_list()
-        # self.called() #계속 탐색 위한 과정?
-        # self.auto_run()
 
         self.timer = QTimer(self)
         self.timer.start(1000)
@@ -71,7 +50,6 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
-        # self.notTrade()  # 미체결 현황 실행
 
 
     # 코드 리스트 받아오기
@@ -117,10 +95,6 @@ class MyWindow(QMainWindow, form_class):
             return True
 
     def check_up(self):
-        #code는 비율에 성립하는지 비교해보는 코드
-        #sell_write=[] #이건 그냥 매도에 쓸 내용
-        #이건 잔고 현황 가져오는 것
-        print('진입여부')
         self.kiwoom.reset_opw00018_output()
         account_number = self.kiwoom.get_login_info("ACCNO")
         account_number = account_number.split(';')[0]
@@ -133,98 +107,32 @@ class MyWindow(QMainWindow, form_class):
             self.kiwoom.set_input_value("계좌번호", account_number)
             self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
         item_count = len(self.kiwoom.opw00018_output['multi'])
-        print('여기 while문')
-        #print('여기까지 안오나?')
-        #여기는 코드 네임 가져오는 것
-        #f=open('code_name.csv', 'r',encoding='utf-8-sig')
-        #read=csv.reader(f)
-        #reads=list(read) #그냥 상태일 때는 이것도 안나오고.....
-        #print(reads)
-        #print('이 파일 리스트 변환 에러임?')
-        #global message
-        #-----------여기까지는 에러가 없음.
-        #code_name=[]
-        #print(code_name)
-        sell_list=[]
-        sell_lists=[]
+
+        sell_list = []
+        sell_lists = []
         #print('아이템 진입')
         for j in range(item_count): #이건 아이템 전체 줄
             row = self.kiwoom.opw00018_output['multi'][j]#여기는 각 줄에 대한 내용
-            type_code=row[0]
-            name=row[1] #종목명
-            profit=row[6] #수익률
-            #print(type_code,name,profit) #여기까지는 문제가 없는 것 같다.
-            #print(float(profit))
+            type_code = row[0]
+            name = row[1] #종목명
+            profit = row[6] #수익률
+
             if float(profit)>(-10.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
-                #print(type_code, name)
+
                 sell_list.append(type_code)
-        #print('아이템 정리')
-        #print(code_name)
-        #print('수익률 판단 후')
-        for i in sell_list:
-            n=re.sub(",","",i)
+
+        for i in sell_list: #이 주식 번호에서 쉼표 제거 부분
+            n = re.sub(",", "", i)
             sell_lists.append(n)
-        '''
-        for i in range(len(code_name)):
-            print(code_name[i]) #아래 for 문에서 문제가 있는듯.
-            for line in reads:
-                if code_name[i] in line[1]:
-                    sell_list.append(line[0])
-                    break
-        '''
-        #sell_list=sell_lists
-        print(sell_lists)
-        #f.close()
+
+        print(sell_lists) #확인 용
+
         self.update_sell_list(sell_lists)
         time.sleep(0.5)
         self.trade_stocks_done = False
         self.timeout()
-        sell_lists.clear()
-        #update_sell_list(sell_list)
         return True
 
-        '''
-        if message=='True':
-            return True
-        else:
-            return False
-        '''
-
-    '''
-    def check_up(self,code):
-        print('매도 알고리즘 진입')
-        today = datetime.datetime.today().strftime("%Y%m%d")
-        df = self.get_ohlcv(code, today)
-        closes = df['close']
-        #비교 단위를 현재가로 5일간 비교
-        if len(closes) < 6:
-            return False
-
-        sum_cls5 = 0
-        today_cls = 0
-
-        for i, cls in enumerate(closes):
-            if i == 0:
-                today_cls = cls
-            elif 1 <= i <= 5:
-                sum_cls5 += cls
-            else:
-                break
-        avg_cls5=sum_cls5/5
-        #구매 가격 가져오기
-        f = open("sb_list.txt", 'rt', encoding='utf-8')
-        sell_list = f.readlines()
-        f.close()
-        buy_price=0
-        for row_data in sell_list:
-            split_row_data = row_data.split(';')
-            codes = split_row_data[1]
-            buy_prices = split_row_data[6].strip()
-            if codes==code:
-                buy_price=buy_prices
-        if today_cls>avg_cls5*5 and today_cls>buy_price:
-            return True
-    '''
     def update_buy_list(self, buy_list):
         f = open("buy_list.txt", "a+", encoding='utf-8')
         for code in buy_list:
@@ -256,23 +164,12 @@ class MyWindow(QMainWindow, form_class):
                 self.timeout()
             buy_list.clear()
             time.sleep(3.6)
-            # 매도 알고리즘, 이걸 코드 실행 기준을 파일 내에 있다고 할 때 해야 하나. 난감.
-            #print('중간')
-            #sell_list=self.check_up
+            # 매도 알고리즘
             if self.check_up():
-                print("여기")
-                #time.sleep(0.5)
-                #self.trade_stocks_done = False
-                #self.timeout()
-            #time.sleep(0.5)
-            #print("상승주: ",sell_list)
+                print("여기") #이것도 실행 되는지 보려고
 
-            #self.update_sell_list(sell_list)
-            #print('매도 알고리즘 내 진입')
             time.sleep(3.6)
-            print("끝")
 
-    # -------------------------------------
 
     # 트레이딩 관련 텍스트 파일 읽어주기
     def trade_stocks(self):
@@ -298,7 +195,6 @@ class MyWindow(QMainWindow, form_class):
             num = split_row_data[3]
             price = split_row_data[4]
             buy = split_row_data[5].strip()
-            # print(buy)
             time.sleep(0.5)
             if buy == '매수전':
                 # print("매수 전 진입") #정상적으로 한번 진입하는 것을 확인
@@ -310,16 +206,14 @@ class MyWindow(QMainWindow, form_class):
             code = split_row_data[1]
             num = split_row_data[3]
             price = split_row_data[4]
-            buy_price = split_row_data[6]
-            buy = split_row_data[5].strip()
-            # print(buy)
+            sell = split_row_data[5].strip()
             time.sleep(0.5)
-            if buy == '매도전':
-                print("매도 전 진입")
-                #매도 주문 하기 위해 현재가를 비교하고 나서 주문넣기
-                self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "")
+
+            if sell == '매도전':
+                #print("매도 전 진입")
+
+                self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "")
         # buy list
-        # 여기는 여러번 진입하긴 하는데 실제로는 바꾸는 거기에 상관이 없을 것 같음.
         for i, row_data in enumerate(buy_list):
             buy_list[i] = buy_list[i].replace("매수전", "주문완료")
             self.trade_stocks_done = False
@@ -334,11 +228,6 @@ class MyWindow(QMainWindow, form_class):
             f.write(row_data)
         f.close()
 
-        # sell list, 여기도 바꿔야 하는데
-        '''        
-        for i, row_data in enumerate(sell_list):
-            sell_list[i] = sell_list[i].replace("매도전", "주문완료")
-        '''
 
         # file update
         f = open("sell_list.txt", 'wt', encoding='utf-8')
@@ -349,19 +238,16 @@ class MyWindow(QMainWindow, form_class):
     # 트레이딩 관련 파일 로드
     def load_buy_sell_list(self):
         f = open("buy_list.txt", 'rt', encoding='utf-8')
-        # f = open("buy_list.txt", 'rt', encoding='euc-kr')
         buy_list = f.readlines()
         f.close()
 
         f = open("sell_list.txt", 'rt', encoding='utf-8')
-        # f = open("sell_list.txt", 'rt', encoding='euc-kr')
         sell_list = f.readlines()
         f.close()
 
         row_count = len(buy_list) + len(sell_list)
         self.tableWidget_3.setRowCount(row_count)
-        # print(buy_list)
-        # buy list
+
         for j in range(len(buy_list)):
             row_data = buy_list[j]
             split_row_data = row_data.split(';')
@@ -404,7 +290,6 @@ class MyWindow(QMainWindow, form_class):
 
         self.kiwoom.send_order("send_order_req", "0101", account, order_type_lookup[order_type], code, num, price,
                                hoga_lookup[hoga], "")
-        # time.sleep(0.5)
 
     # 타임아웃 코드
     def timeout(self):
@@ -412,15 +297,12 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0)
         market_end_time = QTime(15, 30, 0)
         current_time = QTime.currentTime()
-        # print(current_time)
-        # print(current_time, self.trade_stocks_done) #이건 작동 여부 보려고
-        if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False:
+        if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False: #장시간에만
+        #if current_time > market_start_time and self.trade_stocks_done == False: #이건 실험용
             # 일단 여기서 확인해본바로는 마켓시간이 안맞는것 같아서 and를 or로 바꾸고 해봄.
             # print('here') #여기는 장시간에 해야되어서.... 진입 여부 확인용
             self.trade_stocks()  # 여기가 안되는 것 같다.
             self.trade_stocks_done = True
-        #elif current_time>market_end_time or current_time<market_start_time:
-            #print("현재는 주문 가능한 시간이 아닙니다.")
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -471,7 +353,6 @@ class MyWindow(QMainWindow, form_class):
 
         # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
-        # auto_profit(item_count)
         self.tableWidget_2.setRowCount(item_count)
 
         for j in range(item_count):
@@ -498,4 +379,3 @@ if __name__ == "__main__":
     myWindow = MyWindow()
     myWindow.show()
     app.exec_()
-    # myWindow.run()
