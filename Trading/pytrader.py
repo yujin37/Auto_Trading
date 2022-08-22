@@ -123,6 +123,7 @@ class MyWindow(QMainWindow, form_class):
 
         for i in sell_list: #이 주식 번호에서 쉼표 제거 부분
             n = re.sub(",", "", i)
+            n=n.zfill(6)
             sell_lists.append(n)
 
         print(sell_lists) #확인 용
@@ -257,20 +258,25 @@ class MyWindow(QMainWindow, form_class):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
                 #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(j, i, item)
-
+        time.sleep(0.5)
+        #print(sell_list)
         # sell list
         for j in range(len(sell_list)):
             row_data = sell_list[j]
+            #print(row_data)
             split_row_data = row_data.split(';')
-            split_row_data[1] = self.kiwoom.get_master_code_name(split_row_data[1].rstrip())
-
+            #print(split_row_data[1])
+            #split_row_data[1] = self.kiwoom.get_master_code_name(split_row_data[1].rstrip())
+            split_row_data[1] = self.kiwoom.get_master_code_name(split_row_data[1])
+            #print(split_row_data[1])
+            #print(type(split_row_data[1]))
             for i in range(len(split_row_data)):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
                 #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(len(buy_list) + j, i, item)
 
         self.tableWidget_3.resizeRowsToContents()
-
+    #주문관련 도움
     def code_changed(self):
         code = self.lineEdit.text()
         name = self.kiwoom.get_master_code_name(code)
@@ -291,7 +297,7 @@ class MyWindow(QMainWindow, form_class):
         self.kiwoom.send_order("send_order_req", "0101", account, order_type_lookup[order_type], code, num, price,
                                hoga_lookup[hoga], "")
 
-    # 타임아웃 코드
+    # 시간 처리
     def timeout(self):
         # 여기까지는 진입하는데.....
         market_start_time = QTime(9, 0, 0) #장오픈
@@ -318,7 +324,7 @@ class MyWindow(QMainWindow, form_class):
         if self.checkBox.isChecked():
             self.check_balance()
 
-    # 정보 작성?
+    # 잔고조회
     def check_balance(self):
         self.kiwoom.reset_opw00018_output()
         account_number = self.kiwoom.get_login_info("ACCNO")
