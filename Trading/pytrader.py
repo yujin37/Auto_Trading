@@ -10,7 +10,7 @@ import datetime
 import re
 MARKET_KOSPI = 0
 MARKET_KOSDAQ = 10
-
+import threading #스레딩을 위한 라이브러리
 # ui 파일을 불러오는 코드
 form_class = uic.loadUiType("pytrader.ui")[0]
 
@@ -43,7 +43,7 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit.textChanged.connect(self.code_changed)
 
         self.pushButton.clicked.connect(self.send_order)  # 주문
-        self.pushButton_2.clicked.connect(self.check_balance)
+        self.pushButton_2.clicked.connect(self.check_balances)
         self.pushButton_3.clicked.connect(self.auto_run)  # 자동매수 프로그램
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
@@ -324,15 +324,16 @@ class MyWindow(QMainWindow, form_class):
         if self.checkBox.isChecked():
             self.check_balance()
 
-    # 잔고조회
     def check_balance(self):
+        time.sleep(0.5)
+        #print('어디까지 왔나1')
         self.kiwoom.reset_opw00018_output()
         account_number = self.kiwoom.get_login_info("ACCNO")
         account_number = account_number.split(';')[0]
 
         self.kiwoom.set_input_value("계좌번호", account_number)
         self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-
+        #print('어디까지 왔나2')
         while self.kiwoom.remained_data:
             # time.sleep(0.5)
             self.kiwoom.set_input_value("계좌번호", account_number)
@@ -341,19 +342,80 @@ class MyWindow(QMainWindow, form_class):
         # opw00001
         self.kiwoom.set_input_value("계좌번호", account_number)
         self.kiwoom.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
-
+        #print('어디까지 왔나3')
         # balance
         item = QTableWidgetItem(self.kiwoom.d2_deposit)
         # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
         self.tableWidget.setItem(0, 0, item)
-
+        #print('어디까지 왔나4')
         for i in range(1, 6):
             item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
             # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
             self.tableWidget.setItem(0, i, item)
 
         self.tableWidget.resizeRowsToContents()
+        #print('어디까지 왔나5')
+        # Item list
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+        self.tableWidget_2.setRowCount(item_count)
+        #print('어디까지 왔나6')
+        for j in range(item_count):
+            row = self.kiwoom.opw00018_output['multi'][j]
+            for i in range(len(row)):
+                item = QTableWidgetItem(row[i])
+                # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+                self.tableWidget_2.setItem(j, i, item)
 
+        self.tableWidget_2.resizeRowsToContents()
+    #잔고조회 클래스 연결
+    def check_balances(self):
+        t = threading.Thread(target=self.check_balance)
+        t.start()
+        print('클래스 연결 시작')
+    # 미체결 현황 조회, nt_list.txt, 이제 주문 들어가면 미체결, 체결 알림시 삭제
+    def notTrade(self):
+        print('not trade 진입')
+
+    #체결 현황 조회, t_list.txt, 체결 알림이 뜨게 되면 추가를 해줌. 날짜 다르면 삭제 기능도?
+    def Trade(self):
+        time.sleep(5)
+        print('trade 진입')
+'''
+class Check_balance(QThread):
+    def __init__(self,parent):
+        super().__init__(parent)
+        self.parent=parent
+    # 잔고조회
+    def run(self):
+        print('잔고조회 스레드 진입')
+        self.kiwoom.reset_opw00018_output()
+        account_number = self.kiwoom.get_login_info("ACCNO")
+        account_number = account_number.split(';')[0]
+        print('정보조회 초반')
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+        print('여기까지')
+        while self.kiwoom.remained_data:
+            # time.sleep(0.5)
+            self.kiwoom.set_input_value("계좌번호", account_number)
+            self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
+
+        # opw00001
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
+        print('전체')
+        # balance
+        item = QTableWidgetItem(self.kiwoom.d2_deposit)
+        # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        self.tableWidget.setItem(0, 0, item)
+        print('반복문 시작')
+        for i in range(1, 6):
+            item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
+            # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+            self.tableWidget.setItem(0, i, item)
+
+        self.tableWidget.resizeRowsToContents()
+        print('아이템 리스트')
         # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
         self.tableWidget_2.setRowCount(item_count)
@@ -366,17 +428,10 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
-
-    # 미체결 현황 조회, nt_list.txt, 이제 주문 들어가면 미체결, 체결 알림시 삭제
-    def notTrade(self):
-        print('not trade 진입')
-
-    #체결 현황 조회, t_list.txt, 체결 알림이 뜨게 되면 추가를 해줌. 날짜 다르면 삭제 기능도?
-    def Trade(self):
-        time.sleep(5)
-        print('trade 진입')
-
-
+        self.quit()
+        self.wait(5000)
+        print('스레드 종료')
+'''
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindow = MyWindow()

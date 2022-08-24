@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import time
 import pandas as pd
 import sqlite3
+import re
 
 TR_REQ_TIME_INTERVAL = 0.2
 
@@ -202,6 +203,10 @@ class Kiwoom(QAxWidget):
         for i in range(rows):
             codes=self._comm_get_data(trcode, "", rqname, i, "종목번호")
             codes=codes.strip()[1:]
+            codess=re.sub(",","",codes)
+            codess=codess.zfill(6)
+            codes=codess
+            print(codes)
             name = self._comm_get_data(trcode, "", rqname, i, "종목명")
             quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
             purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
@@ -209,7 +214,7 @@ class Kiwoom(QAxWidget):
             eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
             earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
 
-            codes=Kiwoom.change_format(codes)
+            #codes=Kiwoom.change_format(codes)
             quantity = Kiwoom.change_format(quantity)
             purchase_price = Kiwoom.change_format(purchase_price)
             current_price = Kiwoom.change_format(current_price)
