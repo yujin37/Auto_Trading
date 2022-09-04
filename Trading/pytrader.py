@@ -10,7 +10,10 @@ import datetime
 import re
 MARKET_KOSPI = 0
 MARKET_KOSDAQ = 10
-import threading #스레딩을 위한 라이브러리
+#import threading #스레딩을 위한 라이브러리
+import os
+from multiprocessing import Process
+import csv
 # ui 파일을 불러오는 코드
 form_class = uic.loadUiType("pytrader.ui")[0]
 
@@ -43,8 +46,11 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit.textChanged.connect(self.code_changed)
 
         self.pushButton.clicked.connect(self.send_order)  # 주문
-        self.pushButton_2.clicked.connect(self.check_balances)
+        self.pushButton_2.clicked.connect(self.check_balance)
         self.pushButton_3.clicked.connect(self.auto_run)  # 자동매수 프로그램
+        #self.pushButton_3.clicked.connect(self.buy_line)
+        #self.pushButton_3.clicked.connect(self.sell_line)
+        self.pushButton_5.clicked.connect(self.Register)
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
         self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
@@ -58,6 +64,7 @@ class MyWindow(QMainWindow, form_class):
         self.kosdaq_codes = self.kiwoom.get_code_list_by_market(MARKET_KOSDAQ)
 
     def get_ohlcv(self, code, start):
+        #print('함수 진입')
         self.kiwoom.ohlcv = {'date': [], 'open': [], 'high': [], 'low': [], 'close': [], 'volume': []}
 
         self.kiwoom.set_input_value("종목코드", code)
@@ -68,14 +75,19 @@ class MyWindow(QMainWindow, form_class):
 
         df = DataFrame(self.kiwoom.ohlcv, columns=['open', 'high', 'low', 'close', 'volume'],
                        index=self.kiwoom.ohlcv['date'])
+        #print(df)
         return df
 
     # 급등주 포착 알고리즘, 매수
     def check_speedy_rising_volume(self, code):
-        today = datetime.datetime.today().strftime("%Y%m%d")
-        df = self.get_ohlcv(code, today)
-        volumes = df['volume']
 
+        today = datetime.datetime.today().strftime("%Y%m%d")
+        #print(code,today)
+        #print(today)
+        df = self.get_ohlcv(code, today)
+        #print(today)
+        volumes = df['volume']
+        #print('이건 잘 되는거 맞나?ㄴㄴ')
         if len(volumes) < 11:
             return False
 
@@ -93,15 +105,16 @@ class MyWindow(QMainWindow, form_class):
         avg_vol20 = sum_vol20 / 10
         if today_vol > avg_vol20 * 5:
             return True
-
+    #매도 알고리즘
     def check_up(self):
+        #print('여기까지 왔지?')
         self.kiwoom.reset_opw00018_output()
         account_number = self.kiwoom.get_login_info("ACCNO")
         account_number = account_number.split(';')[0]
 
         self.kiwoom.set_input_value("계좌번호", account_number)
         self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-
+        #print('기본정보')
         while self.kiwoom.remained_data:
             # time.sleep(0.5)
             self.kiwoom.set_input_value("계좌번호", account_number)
@@ -111,27 +124,29 @@ class MyWindow(QMainWindow, form_class):
         sell_list = []
         sell_lists = []
         #print('아이템 진입')
+        #print('while 반복문 나옴')
         for j in range(item_count): #이건 아이템 전체 줄
             row = self.kiwoom.opw00018_output['multi'][j]#여기는 각 줄에 대한 내용
             type_code = row[0]
             name = row[1] #종목명
             profit = row[6] #수익률
 
-            if float(profit)>(-10.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
+            if float(profit)>(5.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
 
                 sell_list.append(type_code)
-
+        #print('1차 반복문')
         for i in sell_list: #이 주식 번호에서 쉼표 제거 부분
             n = re.sub(",", "", i)
             n=n.zfill(6)
             sell_lists.append(n)
 
-        print(sell_lists) #확인 용
+        #print(sell_lists) #확인 용
 
         self.update_sell_list(sell_lists)
         time.sleep(0.5)
         self.trade_stocks_done = False
         self.timeout()
+        #print('끝')
         return True
 
     def update_buy_list(self, buy_list):
@@ -140,18 +155,18 @@ class MyWindow(QMainWindow, form_class):
             line = "매수;" + code + ";시장가;1;0;매수전" + "\n"
             f.writelines(line)
         f.close()
+        #print('이건 잘 되는거 맞나?')
     def update_sell_list(self, sell_list):
         f = open("sell_list.txt", "a+", encoding='utf-8')
         for code in sell_list:
             line = "매도;" + code + ";시장가;1;0;매도전" + "\n"
             f.writelines(line)
         f.close()
-
-    # 자동매매 자동 호출 시스템
+    #이건 기존 매수매도 알고리즘
     def auto_run(self):
         buy_list = []
         num = len(self.kosdaq_codes)
-        #sell_list = []
+        # sell_list = []
         for i, code in enumerate(self.kosdaq_codes):
             print(i, '/', num)
             # 매수 알고리즘
@@ -159,7 +174,7 @@ class MyWindow(QMainWindow, form_class):
                 buy_list.append(code)
                 # 확인 차원 출력, 나중에 삭제 예정
                 print("급등주: ", code)
-                print('타입', type(code))
+                #print('타입', type(code))
                 self.update_buy_list(buy_list)
                 time.sleep(0.5)
                 self.trade_stocks_done = False
@@ -168,11 +183,57 @@ class MyWindow(QMainWindow, form_class):
             time.sleep(3.6)
             # 매도 알고리즘
             if self.check_up():
-                print("여기") #이것도 실행 되는지 보려고
+                print("여기")  # 이것도 실행 되는지 보려고
 
             time.sleep(3.6)
+    '''
+    # 자동매매 자동 호출 시스템
+    def auto_run1(self):
 
+        buy_list = []
+        num = len(self.kosdaq_codes)
+        for i, code in enumerate(self.kosdaq_codes):
+            print(i, '/', num)
+            # 매수 알고리즘
+            if self.check_speedy_rising_volume(code):
+                buy_list.append(code)
+                # 확인 차원 출력, 나중에 삭제 예정
+                print("급등주: ", code)
+                self.update_buy_list(buy_list)
+                time.sleep(0.5)
+                self.trade_stocks_done = False
+                self.timeout()
+            buy_list.clear()
+            print('돌자')
 
+    def auto_run2(self):
+        # 매도 알고리즘
+        if self.check_up():
+            print("여기") #이것도 실행 되는지 보려고
+   #프로세싱 함수1
+    def buy_line(self):
+        #t2 = threading.Thread(target=self.auto_run1)
+        t2=Process(target=self.auto_run1)
+        print('접근 시작')
+        time.sleep(0.5)
+        t2.start()
+        t2.join()
+        time.sleep(0.5)
+    #프로세싱 함수2
+    def sell_line(self):
+        market_start_time = QTime(9, 0, 0)  # 장오픈
+        market_end_time = QTime(15, 30, 0)  # 장마감
+        while True:
+            current_time = QTime.currentTime()
+            if current_time>market_start_time:
+                #t3 = threading.Thread(target=self.auto_run2)
+                t3 = Process(target=self.auto_run2)
+                print('접근 시작')
+                time.sleep(0.5)
+                t3.start()
+                t3.join()
+
+   '''
     # 트레이딩 관련 텍스트 파일 읽어주기
     def trade_stocks(self):
         # print('here1')
@@ -229,7 +290,6 @@ class MyWindow(QMainWindow, form_class):
             f.write(row_data)
         f.close()
 
-
         # file update
         f = open("sell_list.txt", 'wt', encoding='utf-8')
         for row_data in sell_list:
@@ -259,17 +319,16 @@ class MyWindow(QMainWindow, form_class):
                 #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
                 self.tableWidget_3.setItem(j, i, item)
         time.sleep(0.5)
-        #print(sell_list)
+
         # sell list
         for j in range(len(sell_list)):
             row_data = sell_list[j]
-            #print(row_data)
+
             split_row_data = row_data.split(';')
-            #print(split_row_data[1])
+
             #split_row_data[1] = self.kiwoom.get_master_code_name(split_row_data[1].rstrip())
             split_row_data[1] = self.kiwoom.get_master_code_name(split_row_data[1])
-            #print(split_row_data[1])
-            #print(type(split_row_data[1]))
+
             for i in range(len(split_row_data)):
                 item = QTableWidgetItem(split_row_data[i].rstrip())
                 #item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
@@ -303,10 +362,13 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0) #장오픈
         market_end_time = QTime(15, 30, 0) #장마감
         current_time = QTime.currentTime()
-        if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False: #장시간에만
-        #if current_time > market_start_time and self.trade_stocks_done == False: #이건 실험용
+        #lock = threading.Lock() #스레드 락
+        #if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False: #장시간에만
+        if current_time > market_start_time and self.trade_stocks_done == False: #이건 실험용
+            #lock.acquire() #스레드 충돌 잠금
             self.trade_stocks()  # 여기가 안되는 것 같다.
             self.trade_stocks_done = True
+            #lock.release() #스레드 락 해제
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -323,17 +385,17 @@ class MyWindow(QMainWindow, form_class):
     def timeout2(self):
         if self.checkBox.isChecked():
             self.check_balance()
-
+    #잔고조회 스레드 라인
     def check_balance(self):
+        #print(name)
         time.sleep(0.5)
-        #print('어디까지 왔나1')
         self.kiwoom.reset_opw00018_output()
         account_number = self.kiwoom.get_login_info("ACCNO")
         account_number = account_number.split(';')[0]
 
         self.kiwoom.set_input_value("계좌번호", account_number)
         self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-        #print('어디까지 왔나2')
+
         while self.kiwoom.remained_data:
             # time.sleep(0.5)
             self.kiwoom.set_input_value("계좌번호", account_number)
@@ -342,7 +404,7 @@ class MyWindow(QMainWindow, form_class):
         # opw00001
         self.kiwoom.set_input_value("계좌번호", account_number)
         self.kiwoom.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
-        #print('어디까지 왔나3')
+
         # balance
         item = QTableWidgetItem(self.kiwoom.d2_deposit)
         # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
@@ -354,11 +416,11 @@ class MyWindow(QMainWindow, form_class):
             self.tableWidget.setItem(0, i, item)
 
         self.tableWidget.resizeRowsToContents()
-        #print('어디까지 왔나5')
+
         # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
         self.tableWidget_2.setRowCount(item_count)
-        #print('어디까지 왔나6')
+
         for j in range(item_count):
             row = self.kiwoom.opw00018_output['multi'][j]
             for i in range(len(row)):
@@ -367,11 +429,17 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
-    #잔고조회 클래스 연결
+    '''
+    #잔고조회 스레드 연결
     def check_balances(self):
-        t = threading.Thread(target=self.check_balance)
+        #t = threading.Thread(target=self.check_balance)
+        t = Process(target=self.check_balance, daemon=True)
         t.start()
-        print('클래스 연결 시작')
+        print('start만')
+        t.join()
+        print('end')
+        #print('클래스 연결 시작')
+    '''
     # 미체결 현황 조회, nt_list.txt, 이제 주문 들어가면 미체결, 체결 알림시 삭제
     def notTrade(self):
         print('not trade 진입')
@@ -380,58 +448,18 @@ class MyWindow(QMainWindow, form_class):
     def Trade(self):
         time.sleep(5)
         print('trade 진입')
-'''
-class Check_balance(QThread):
-    def __init__(self,parent):
-        super().__init__(parent)
-        self.parent=parent
-    # 잔고조회
-    def run(self):
-        print('잔고조회 스레드 진입')
-        self.kiwoom.reset_opw00018_output()
-        account_number = self.kiwoom.get_login_info("ACCNO")
-        account_number = account_number.split(';')[0]
-        print('정보조회 초반')
-        self.kiwoom.set_input_value("계좌번호", account_number)
-        self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-        print('여기까지')
-        while self.kiwoom.remained_data:
-            # time.sleep(0.5)
-            self.kiwoom.set_input_value("계좌번호", account_number)
-            self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
+    #실시간 등록해서 종목 코드 얻는 것에 대한 것
+    def Register(self):
+        print(len(self.kosdaq_codes))
+        #이제 100개씩 끊어서 만들어준다.
+        setting=[]
+        sc_num=1
+        for i in range(len(kosdaq_codes)):
+            if len(setting)==100:
+                SetRealReg(sc_num, setting, "9001;10;13", "1");
+                sc_num+=1
+                setting.clear()
 
-        # opw00001
-        self.kiwoom.set_input_value("계좌번호", account_number)
-        self.kiwoom.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
-        print('전체')
-        # balance
-        item = QTableWidgetItem(self.kiwoom.d2_deposit)
-        # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
-        self.tableWidget.setItem(0, 0, item)
-        print('반복문 시작')
-        for i in range(1, 6):
-            item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
-            # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
-            self.tableWidget.setItem(0, i, item)
-
-        self.tableWidget.resizeRowsToContents()
-        print('아이템 리스트')
-        # Item list
-        item_count = len(self.kiwoom.opw00018_output['multi'])
-        self.tableWidget_2.setRowCount(item_count)
-
-        for j in range(item_count):
-            row = self.kiwoom.opw00018_output['multi'][j]
-            for i in range(len(row)):
-                item = QTableWidgetItem(row[i])
-                # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
-                self.tableWidget_2.setItem(j, i, item)
-
-        self.tableWidget_2.resizeRowsToContents()
-        self.quit()
-        self.wait(5000)
-        print('스레드 종료')
-'''
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindow = MyWindow()

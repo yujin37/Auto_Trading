@@ -45,7 +45,7 @@ class Kiwoom(QAxWidget):
 
     def get_master_code_name(self, code):
         code_name = self.dynamicCall("GetMasterCodeName(QString)", code)
-        print(code,code_name)
+        #print(code,code_name)
         return code_name
 
     def get_connect_state(self):
@@ -157,7 +157,7 @@ class Kiwoom(QAxWidget):
 
     def _opt10081(self, rqname, trcode):
         data_cnt = self._get_repeat_cnt(trcode, rqname)
-
+        #print(data_cnt)
         for i in range(data_cnt):
             date = self._comm_get_data(trcode, "", rqname, i, "일자")
             open = self._comm_get_data(trcode, "", rqname, i, "시가")
@@ -165,13 +165,14 @@ class Kiwoom(QAxWidget):
             low = self._comm_get_data(trcode, "", rqname, i, "저가")
             close = self._comm_get_data(trcode, "", rqname, i, "현재가")
             volume = self._comm_get_data(trcode, "", rqname, i, "거래량")
-
+            #print('여기')
             self.ohlcv['date'].append(date)
             self.ohlcv['open'].append(int(open))
             self.ohlcv['high'].append(int(high))
             self.ohlcv['low'].append(int(low))
             self.ohlcv['close'].append(int(close))
             self.ohlcv['volume'].append(int(volume))
+            #print(self.ohlcv)
 
     def reset_opw00018_output(self):
         self.opw00018_output = {'single': [], 'multi': []}
@@ -191,7 +192,7 @@ class Kiwoom(QAxWidget):
         total_earning_rate = Kiwoom.change_format(total_earning_rate)
 
         if self.get_server_gubun():
-            total_earning_rate = float(total_earning_rate) / 100
+            total_earning_rate = float(total_earning_rate)
             total_earning_rate = str(total_earning_rate)
 
         self.opw00018_output['single'].append(total_earning_rate)
@@ -206,7 +207,7 @@ class Kiwoom(QAxWidget):
             codess=re.sub(",","",codes)
             codess=codess.zfill(6)
             codes=codess
-            print(codes)
+            #print(codes)
             name = self._comm_get_data(trcode, "", rqname, i, "종목명")
             quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
             purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
@@ -241,5 +242,5 @@ if __name__ == "__main__":
 
     kiwoom.set_input_value("계좌번호", account_number)
     kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-    print(kiwoom.opw00018_output['single'])
-    print(kiwoom.opw00018_output['multi'])
+    #print(kiwoom.opw00018_output['single'])
+    #print(kiwoom.opw00018_output['multi'])
