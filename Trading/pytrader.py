@@ -454,11 +454,16 @@ class MyWindow(QMainWindow, form_class):
         #이제 100개씩 끊어서 만들어준다.
         setting=[]
         sc_num=1
-        for i in range(len(kosdaq_codes)):
-            if len(setting)==100:
-                SetRealReg(sc_num, setting, "9001;10;13", "1");
+        for i in range(len(self.kosdaq_codes)):
+            #print(i)
+            if len(setting)==50:
+                #self.SetRealReg(sc_num, setting, "9001;10;13", "1");
                 sc_num+=1
+                print(setting)
                 setting.clear()
+            setting.append(self.kosdaq_codes[i])
+        print('끝',sc_num)
+            #print(setting)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
