@@ -54,6 +54,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
         self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
+        self.pushButton_8.clicked.connect(self.OutRegister)
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
 
@@ -457,14 +458,24 @@ class MyWindow(QMainWindow, form_class):
         for i in range(len(self.kosdaq_codes)):
             #print(i)
             if len(setting)==50:
-                #self.SetRealReg(sc_num, setting, "9001;10;13", "1");
+                code=""
+                #종목 코드를 " " 로 바꿔주는 과정.
+
+                for j in setting:
+                    #print('진입')
+                    code+=j
+                    code+=";"
+                #print(code)
+                #self.SetRealReg(sc_num, setting, "9001;10", "1");
                 sc_num+=1
-                print(setting)
+                #print(setting)
                 setting.clear()
             setting.append(self.kosdaq_codes[i])
         print('끝',sc_num)
             #print(setting)
-
+    #실시간 등록 해제에 관하여
+    def OutRegister(self):
+        print('실시간 등록 해제')
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindow = MyWindow()
