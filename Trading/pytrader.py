@@ -50,7 +50,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_3.clicked.connect(self.auto_run)  # 자동매수 프로그램
         #self.pushButton_3.clicked.connect(self.buy_line)
         #self.pushButton_3.clicked.connect(self.sell_line)
-        self.pushButton_5.clicked.connect(self.Register)
+        self.pushButton_5.clicked.connect(self.Register) #구독 신청
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
         self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
@@ -58,7 +58,7 @@ class MyWindow(QMainWindow, form_class):
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
 
-
+        #self.kiwoom.OnReceiveRealData.connect(self._handler_real_data) #이건 실시간 받을려고
     # 코드 리스트 받아오기
     def get_code_list(self):
         self.kospi_codes = self.kiwoom.get_code_list_by_market(MARKET_KOSPI)
@@ -467,22 +467,21 @@ class MyWindow(QMainWindow, form_class):
                     code+=";"
 
                 #print(code)
-                #sc_nums=str(sc_num) #문자열로 해야 할 시 추가1
-                #sc_nums=sc_nums.zfill(4) #문자열로 해야 할 시 추가2
-                sc_nums='{0:04d}'.format(sc_num) #숫자로 해야 할 시 추가1
-                #print(sc_nums)
-                #print(sc_nums)
-                #time.sleep(3)
+                sc_nums=str(sc_num) #문자열로 해야 할 시 추가1
+                sc_nums=sc_nums.zfill(4) #문자열로 해야 할 시 추가2
+                #sc_nums='{0:04d}'.format(sc_num) #숫자로 해야 할 시 추가1
+
                 strScreenNo=sc_nums
-                strCodeList=setting
-                strFidList=["9001","10","13"]
-                strOptType=1
+                strCodeList=code
+                strFidList="9001","10","13"
+                strOptType="1"
+                #print(type(sc_nums), type(strOptType))
                 #print(strScreenNo,strCodeList,strFidList,strOptType)
-                self.SetRealReg(strScreenNo,strCodeList,strFidList,strOptType);
+                self.kiwoom.dynamicCall("SetRealReg(QString,QString,QString,QString)",strScreenNo,strCodeList,strFidList,strOptType);
                 sc_num+=1
                 #print(type(code))
                 setting.clear()
-                print(i,'진행완료')
+                #print(i,'진행완료')
             setting.append(self.kosdaq_codes[i])
             #print(type(self.kosdaq_codes[i]))
         print('끝',sc_num)
