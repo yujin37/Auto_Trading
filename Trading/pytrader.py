@@ -54,7 +54,8 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
         self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
-        self.pushButton_8.clicked.connect(self.OutRegister)
+        self.pushButton_8.clicked.connect(self.OutRegister) #종목 구독 해제
+        self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
 
@@ -488,7 +489,79 @@ class MyWindow(QMainWindow, form_class):
             #print(setting)
     #실시간 등록 해제에 관하여
     def OutRegister(self):
+        self.kiwoom.dynamicCall("ALL","ALL")
+        #self.kiwoom.dynamicCall(QString,QString)","ALL","ALL") #아니라면
         print('실시간 등록 해제')
+
+    def GetCommRealData(self, code, fid):
+        data = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, fid)
+        return data
+
+    def _handler_real_data(self, code, real_type, data, real_data):
+        '''OnReceiveRealData()이벤트가 발생될때
+        실행되는 함수 GetCommRealData가 들어가야함
+        '''
+        print(code, real_type, data)
+        ##fid에 따라 real_type이 달라짐
+        buy_list = []
+        if real_type == "주식호가잔량":
+            self.comp_vol = self.GetCommRealData(code, 13)
+            print(self.comp_vol)
+
+            avg_vol = self.cal_df.loc[[code], ['평균 주식거래량']]
+
+            if self.check_kosdaq_cal and self.comp_vol > avg_vol:
+                print("급등" + self.vol)
+                buy_list.append(code)
+                # 확인 차원 출력, 나중에 삭제 예정
+                print("급등주: ", code)
+                self.update_buy_list(buy_list)
+                time.sleep(0.5)
+                self.trade_stocks_done = False
+                self.timeout()
+    #과거 데이터 계산 함수, 지금은 버튼 형태, 나중엔 정기적인 호출 혹은 시간되면
+    def Count_Volume(self):
+        market_start_time = QTime(9, 0, 0)  # 장오픈
+        market_end_time = QTime(15, 30, 0)  # 장마감
+        current_time = QTime.currentTime()
+        if current_time < market_end_time or current_time > market_start_time:
+            print('현재는 과거 데이터 계산 시간입니다.')
+            for j in range(len(self.kosdaq_codes)):
+                code=self.kosdaq_codes[j] #종목 코드 얻기
+                #print('과거 거래량 계산 시작점')
+                today = datetime.datetime.today().strftime("%Y%m%d")
+                df=self.get_ohlcv(code,today)
+                #print('여기')
+                volumes=df['volume']
+                #print('전체 가져오기')
+
+                if len(volumes) > 11:
+                    sum_vol20 = 0
+
+                    for i, vol in enumerate(volumes):
+                        if i == 0:
+                            today_vol = vol
+                        elif 1 <= i <= 10:
+                            sum_vol20 += vol
+                        else:
+                            break
+
+                    avg_vol20 = sum_vol20 / 10
+                ''' 날짜, 종목코드, 평균거래량 업데이트 '''
+                # test=pd.DataFrame({'날짜':list(today),'종목코드':list(code),'평균거래량':list(avg_vol20)})
+                # test.to_csv("counting.csv",mode='a', header=False) #csv파일로 저장
+                # 모드를 파일에 추가한다.
+                # 나중에 비교할 때는 파일 읽어서 해주기
+                time.sleep(3.6)
+                
+            print('여기까지는 계산')
+            #기록해야 할 정보
+
+
+        else:
+            print('현재는 장 시간입니다.')
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindow = MyWindow()
