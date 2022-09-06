@@ -465,12 +465,26 @@ class MyWindow(QMainWindow, form_class):
                     #print('진입')
                     code+=j
                     code+=";"
+
                 #print(code)
-                #self.SetRealReg(sc_num, setting, "9001;10", "1");
+                #sc_nums=str(sc_num) #문자열로 해야 할 시 추가1
+                #sc_nums=sc_nums.zfill(4) #문자열로 해야 할 시 추가2
+                sc_nums='{0:04d}'.format(sc_num) #숫자로 해야 할 시 추가1
+                #print(sc_nums)
+                #print(sc_nums)
+                #time.sleep(3)
+                strScreenNo=sc_nums
+                strCodeList=setting
+                strFidList=["9001","10","13"]
+                strOptType=1
+                #print(strScreenNo,strCodeList,strFidList,strOptType)
+                self.SetRealReg(strScreenNo,strCodeList,strFidList,strOptType);
                 sc_num+=1
-                #print(setting)
+                #print(type(code))
                 setting.clear()
+                print(i,'진행완료')
             setting.append(self.kosdaq_codes[i])
+            #print(type(self.kosdaq_codes[i]))
         print('끝',sc_num)
             #print(setting)
     #실시간 등록 해제에 관하여
