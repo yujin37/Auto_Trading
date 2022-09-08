@@ -525,7 +525,7 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0)  # 장오픈
         market_end_time = QTime(15, 30, 0)  # 장마감
         current_time = QTime.currentTime()
-        if current_time < market_end_time or current_time > market_start_time:
+        if current_time > market_end_time or current_time < market_start_time:
             print('현재는 과거 데이터 계산 시간입니다.')
             for j in range(len(self.kosdaq_codes)):
                 code=self.kosdaq_codes[j] #종목 코드 얻기
@@ -555,8 +555,7 @@ class MyWindow(QMainWindow, form_class):
                 test=pd.DataFrame(test,index=[j]) #기존엔 인덱스가 0번만 되서 일단 번호를 부여하도록
                 print(test) #확인용, 후에 삭제 예정
                 test.to_csv("counting.csv",mode='a', header=False) #csv파일로 저장
-                # 모드를 파일에 추가한다.
-                # 나중에 비교할 때는 파일 읽어서 해주기
+                #나중에 counting.csv 파일 읽어서 하기, 라인 패스할 필요 없음
                 time.sleep(3.6)
 
             print('여기까지는 계산')
