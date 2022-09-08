@@ -553,7 +553,7 @@ class MyWindow(QMainWindow, form_class):
                 #test=pd.DataFrame({'날짜': [today],'종목코드':[code],'평균거래량': [avg_vol20]})
                 test = {'날짜': [today], '종목코드': [code], '평균거래량': [avg_vol20]} #데이터 프레임
                 test=pd.DataFrame(test,index=[j]) #기존엔 인덱스가 0번만 되서 일단 번호를 부여하도록
-                print(test)
+                print(test) #확인용, 후에 삭제 예정
                 test.to_csv("counting.csv",mode='a', header=False) #csv파일로 저장
                 # 모드를 파일에 추가한다.
                 # 나중에 비교할 때는 파일 읽어서 해주기
