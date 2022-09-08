@@ -521,6 +521,7 @@ class MyWindow(QMainWindow, form_class):
                 self.timeout()
     #과거 데이터 계산 함수, 지금은 버튼 형태, 나중엔 정기적인 호출 혹은 시간되면
     def Count_Volume(self):
+        #나중엔 이걸 정기적으로 호출하는데 날짜 기준으로 받아도 될 것 같다.
         market_start_time = QTime(9, 0, 0)  # 장오픈
         market_end_time = QTime(15, 30, 0)  # 장마감
         current_time = QTime.currentTime()
@@ -547,13 +548,17 @@ class MyWindow(QMainWindow, form_class):
                             break
 
                     avg_vol20 = sum_vol20 / 10
+
                 ''' 날짜, 종목코드, 평균거래량 업데이트 '''
-                # test=pd.DataFrame({'날짜':list(today),'종목코드':list(code),'평균거래량':list(avg_vol20)})
-                # test.to_csv("counting.csv",mode='a', header=False) #csv파일로 저장
+                #test=pd.DataFrame({'날짜': [today],'종목코드':[code],'평균거래량': [avg_vol20]})
+                test = {'날짜': [today], '종목코드': [code], '평균거래량': [avg_vol20]}
+                test=pd.DataFrame(test,index=[j])
+                print(test)
+                test.to_csv("counting.csv",mode='a', header=False) #csv파일로 저장
                 # 모드를 파일에 추가한다.
                 # 나중에 비교할 때는 파일 읽어서 해주기
                 time.sleep(3.6)
-                
+
             print('여기까지는 계산')
             #기록해야 할 정보
 
