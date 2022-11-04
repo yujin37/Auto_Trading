@@ -15,10 +15,53 @@ import os
 from multiprocessing import Process
 import csv
 #차트 조회를 위한
-import FinanceDatatReader as fdr
+import FinanceDataReader as fdr
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 #fdr.__version__
 # ui 파일을 불러오는 코드
 form_class = uic.loadUiType("pytrader.ui")[0]
+form_class2 = uic.loadUiType("second.ui")[0]
+class SecondWindow(QDialog, form_class2):
+    def __init__(self):
+        super(SecondWindow, self).__init__()
+        self.initUI()
+        self.show()
+    def initUI(self):
+        self.setupUi(self)
+        self.fig=plt.Figure()
+        self.canvas = FigureCanvas(self.fig)
+        self.home.clicked.connect(self.Home)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.graph_layout.addWidget(self.toolbar)
+        self.graph_layout.addWidget(self.canvas)
+        #time.sleep(0.5)
+        #self.plot()
+
+    def Home(self):
+        self.close()
+    def plot(self):
+
+        #종목번호 가져오기
+        code_num=self.MyWindow.lineEdit3.text()
+        code_num=str(code_num)
+        print(code_num)
+        #날짜 시작점
+        start_date=self.MyWindow.dateEdit.text()
+        end_date=self.MyWindow.dateEdit2.text()
+        start_date=str(start_date)
+        end_date=str(end_date)
+        #날짜 끝점 날짜는 0000-00-00
+        df = fdr.DataReader(code_num, start_date, end_date)
+        #df = fdr.DatatReader(code_num, '년도') #이건 해당 년도부터 현재까지 차트
+        #close, open, high, low, volume, change 정보를 요청할 수 있다.
+        print(df)
+        #plt.plot(df['high'],[start_date, end_date])
+        #plt.show()
+
+
+
 
 
 class MyWindow(QMainWindow, form_class):
@@ -53,7 +96,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_3.clicked.connect(self.auto_run)  # 자동매수 프로그램
         #self.pushButton_3.clicked.connect(self.buy_line)
         #self.pushButton_3.clicked.connect(self.sell_line)
-        self.pushButoon_4.clicked.connect(self.Chart)
+        self.pushButton_4.clicked.connect(self.Chart)
         self.pushButton_5.clicked.connect(self.Register) #구독 신청
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
@@ -571,13 +614,22 @@ class MyWindow(QMainWindow, form_class):
         else:
             print('현재는 장 시간입니다.')
     def Chart(self):
+        self.second=SecondWindow()
+        '''
         #종목번호 가져오기
+        code_num=self.lineEdit3.text()
+        code_num=str(code_num)
         #날짜 시작점
+        start_date=self.dateEdit.text()
+        end_date=self.dateEdit2.text()
+        start_date=str(start_date)
+        end_date=str(end_date)
         #날짜 끝점 날짜는 0000-00-00
-        df = fdr.DataReader('종목', '시작점', '끝점')
-        df = fdr.DatatReader('종목', '년도') #이건 해당 년도부터 현재까지 차트
+        df = fdr.DataReader(code_num, start_date, end_date)
+        #df = fdr.DatatReader(code_num, '년도') #이건 해당 년도부터 현재까지 차트
         #close, open, high, low, volume, change 정보를 요청할 수 있다.
-        df['여긴 필요한거'].plot()
+        #df['close'].plot()
+        '''
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
