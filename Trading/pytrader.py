@@ -99,8 +99,8 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_4.clicked.connect(self.Chart)
         self.pushButton_5.clicked.connect(self.Register) #구독 신청
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
-        self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
-        self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
+        #self.pushButton_7.clicked.connect(self.notTrade)  # 미체결현황
+        #self.pushButton_7.clicked.connect(self.Trade)  # 체결현황
         self.pushButton_8.clicked.connect(self.OutRegister) #종목 구독 해제
         self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
 
