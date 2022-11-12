@@ -19,6 +19,7 @@ import FinanceDataReader as fdr
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
 #fdr.__version__
 # ui 파일을 불러오는 코드
 form_class = uic.loadUiType("pytrader.ui")[0]
@@ -43,14 +44,23 @@ class SecondWindow(QDialog, form_class2):
     def Home(self):
         self.close()
     def plot(self):
-        print('here')
-        #종목번호 가져오기
-        #self.code_num.setText("input code num")
         text=self.code_num.text()
         start_date=self.dateEdit.text()
         end_date=self.dateEdit_2.text()
         df=fdr.DataReader(text,start_date, end_date)
 
+        ax1 = self.fig.add_subplot(1, 1, 1)
+        self.graph_layout.addWidget(self.canvas) #이건 x, y축이 겹치는 문제 발생
+
+        if self.checkBox.isChecked():
+            ax1.plot(df.index,df['Open'], label='Open', color='blue')
+        if self.checkBox_2.isChecked():
+            ax1.plot(df.index, df['Close'], label='Close', color='red')
+        if self.checkBox_3.isChecked():
+            ax1.plot(df.index, df['High'], label='High', color='green')
+        if self.checkBox_4.isChecked():
+            ax1.plot(df.index, df['Low'], label='Low', color='purple')
+        self.canvas.draw()
 
 
 

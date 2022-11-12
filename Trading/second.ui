@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>915</width>
-    <height>370</height>
+    <width>972</width>
+    <height>467</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QPushButton" name="home">
    <property name="geometry">
     <rect>
-     <x>820</x>
-     <y>320</y>
+     <x>860</x>
+     <y>360</y>
      <width>93</width>
      <height>28</height>
     </rect>
@@ -31,8 +31,8 @@
     <rect>
      <x>40</x>
      <y>40</y>
-     <width>571</width>
-     <height>261</height>
+     <width>621</width>
+     <height>341</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="graph_layout"/>
@@ -40,10 +40,10 @@
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>620</x>
-     <y>50</y>
+     <x>680</x>
+     <y>40</y>
      <width>281</width>
-     <height>181</height>
+     <height>321</height>
     </rect>
    </property>
    <property name="title">
@@ -122,13 +122,78 @@
     <property name="geometry">
      <rect>
       <x>170</x>
-      <y>150</y>
+      <y>280</y>
       <width>93</width>
       <height>28</height>
      </rect>
     </property>
     <property name="text">
      <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>150</y>
+      <width>64</width>
+      <height>15</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>종류</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>160</y>
+      <width>96</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>오픈</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_2">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>190</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>마감</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_3">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>220</y>
+      <width>96</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>최고</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_4">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>250</y>
+      <width>96</width>
+      <height>19</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>최저</string>
     </property>
    </widget>
   </widget>
