@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5 import uic
+from PyQt5 import uic, QtCore, QtGui, QtWidgets
 from Kiwoom import *
 import time
 # pymon 추가
@@ -27,6 +27,7 @@ class SecondWindow(QDialog, form_class2):
     def __init__(self):
         super(SecondWindow, self).__init__()
         self.initUI()
+        self.find.clicked.connect(self.plot)
         self.show()
     def initUI(self):
         self.setupUi(self)
@@ -37,28 +38,19 @@ class SecondWindow(QDialog, form_class2):
         self.graph_layout.addWidget(self.toolbar)
         self.graph_layout.addWidget(self.canvas)
         #time.sleep(0.5)
-        #self.plot()
+        #self.pushButton_out.clicked.connect(self.plot)
 
     def Home(self):
         self.close()
     def plot(self):
-
+        print('here')
         #종목번호 가져오기
-        code_num=self.MyWindow.lineEdit3.text()
-        code_num=str(code_num)
-        print(code_num)
-        #날짜 시작점
-        start_date=self.MyWindow.dateEdit.text()
-        end_date=self.MyWindow.dateEdit2.text()
-        start_date=str(start_date)
-        end_date=str(end_date)
-        #날짜 끝점 날짜는 0000-00-00
-        df = fdr.DataReader(code_num, start_date, end_date)
-        #df = fdr.DatatReader(code_num, '년도') #이건 해당 년도부터 현재까지 차트
-        #close, open, high, low, volume, change 정보를 요청할 수 있다.
-        print(df)
-        #plt.plot(df['high'],[start_date, end_date])
-        #plt.show()
+        #self.code_num.setText("input code num")
+        text=self.code_num.text()
+        start_date=self.dateEdit.text()
+        end_date=self.dateEdit_2.text()
+        df=fdr.DataReader(text,start_date, end_date)
+
 
 
 
@@ -238,7 +230,6 @@ class MyWindow(QMainWindow, form_class):
     '''
     # 자동매매 자동 호출 시스템
     def auto_run1(self):
-
         buy_list = []
         num = len(self.kosdaq_codes)
         for i, code in enumerate(self.kosdaq_codes):
@@ -254,7 +245,6 @@ class MyWindow(QMainWindow, form_class):
                 self.timeout()
             buy_list.clear()
             print('돌자')
-
     def auto_run2(self):
         # 매도 알고리즘
         if self.check_up():
@@ -281,7 +271,6 @@ class MyWindow(QMainWindow, form_class):
                 time.sleep(0.5)
                 t3.start()
                 t3.join()
-
    '''
     # 트레이딩 관련 텍스트 파일 읽어주기
     def trade_stocks(self):
@@ -615,6 +604,7 @@ class MyWindow(QMainWindow, form_class):
             print('현재는 장 시간입니다.')
     def Chart(self):
         self.second=SecondWindow()
+
         '''
         #종목번호 가져오기
         code_num=self.lineEdit3.text()
