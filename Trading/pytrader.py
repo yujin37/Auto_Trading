@@ -60,6 +60,8 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_7.clicked.connect(self.Join_search) #조건검색 후 주문 적용
         self.pushButton_8.clicked.connect(self.Code_info)
         #self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
+        self.pushButton_11.clicked.connect(self.percent_buy)
+        self.pushButton_12.clicked.connect(self.percent_sell)
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
 
@@ -469,6 +471,7 @@ class MyWindow(QMainWindow, form_class):
     #조건식 관련해서 출력내용 지우기
     def clear_line(self):
         self.textEdit.clear()
+    #종목 검색 후 정보 출력
     def Code_info(self):
         name = self.lineEdit_3.text()
         print(name)
@@ -505,6 +508,82 @@ class MyWindow(QMainWindow, form_class):
             text5 = df.loc[str(todays), 'Change']
             text5 = str(int(text5*100))
             self.textEdit_2.append('변동율: ' + text5 + ' %')
+    def percent_buy(self):
+        code = self.lineEdit_4.text()
+        percent = self.lineEdit_5.text()
+        price = self.lineEdit_8.text()
+        size = self.lineEdit_9.text()
+        result = int(price) + int(price)*(int(percent)/100) #매수 가격 정하기
+        f = open("buy_list.txt", "a+", encoding='utf-8')
+        line = "매수;" + code + ";지정가;"+size+";"+str(int(result))+";매수전" + "\n"
+        f.writelines(line)
+        f.close()
+        time.sleep(0.5)
+        self.trade_stocks_done = False
+        self.timeout()
+        print(line)
+
+
+    def percent_sell(self):
+        code = self.lineEdit_4.text()
+        percent = self.lineEdit_5.text()
+        size = self.lineEdit_9.text()
+        print(code, percent)
+        #수익률 가져오기
+        self.kiwoom.reset_opw00018_output()
+        account_number = self.kiwoom.get_login_info("ACCNO")
+        account_number = account_number.split(';')[0]
+
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+        while self.kiwoom.remained_data:
+            self.kiwoom.set_input_value("계좌번호", account_number)
+            self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
+        #item = QTableWidgetItem(self.kiwoom.d2_deposit)
+        #for i in range(1, 6):
+            #item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
+
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+        #cnt = 0
+        earn=0
+        for j in range(item_count):
+            row = self.kiwoom.opw00018_output['multi'][j]
+                #print(item) #여기 아이템 확인하고
+            if code == row[0]:
+                earn = row[6] #이걸로 접근되면 해서
+                break
+                #earn=0
+            else:
+                earn = 0
+        if earn == 0:
+            print('존재하지 않음.')
+            print(code, earn)
+            #earn=0
+        else:
+
+            if int(percent) <= int(earn): #기준점 넘었으면 현재가로 주문 넣기
+                f = open("sell_list.txt", "a+", encoding='utf-8')
+                line = "매도;" + code + ";시장가;" + size + ";" + "0" + ";매도전" + "\n"
+                f.writelines(line)
+                f.close()
+                time.sleep(0.5)
+                self.trade_stocks_done = False
+                self.timeout()
+                #print(line)
+            else: #만약 기준점 안넘은 상태면 원하는 이익률로 주문 넣기
+                price = int(row[3]) + int(row[3])*(int(percent)/100) #매수 가격 정하기
+                f = open("sell_list.txt", "a+", encoding='utf-8')
+                line = "매도;" + code + ";지정가;" + size + ";" + str(price) + ";매도전" + "\n"
+                f.writelines(line)
+                f.close()
+                time.sleep(0.5)
+                self.trade_stocks_done = False
+                self.timeout()
+                #print(line)
+
+            print('여긴 주문영역')
+
+        print(code, earn)
 
 
 
