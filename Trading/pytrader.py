@@ -8,9 +8,11 @@ import time
 from pandas import DataFrame
 import datetime
 import re
+import pandas as pd
 MARKET_KOSPI = 0
 MARKET_KOSDAQ = 10
 from Second import *
+import csv
 
 
 # ui 파일을 불러오는 코드
@@ -56,6 +58,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_5.clicked.connect(self.Search) #조건검색 새로고침
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.Join_search) #조건검색 후 주문 적용
+        self.pushButton_8.clicked.connect(self.Code_info)
         #self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
@@ -63,7 +66,7 @@ class MyWindow(QMainWindow, form_class):
         #self.kiwoom.OnReceiveTrCondition.connect(self.OnReceiveTrCondition)
         #self.kiwoom.OnReceiveConditionVer.connect(self.OnReceiveConditionVer)
 
-
+        self.textch=""
 
     # 코드 리스트 받아오기
     def get_code_list(self):
@@ -466,6 +469,45 @@ class MyWindow(QMainWindow, form_class):
     #조건식 관련해서 출력내용 지우기
     def clear_line(self):
         self.textEdit.clear()
+    def Code_info(self):
+        name = self.lineEdit_3.text()
+        print(name)
+        code = 0
+        file = open('code_name.csv','r', encoding='utf-8')
+        rdr = csv.reader(file)
+        for line in rdr:
+            if name == line[1]:
+                code = line[0]
+        print(code)
+        self.textEdit_2.clear()
+        if code == 0:
+            self.textch += "해당 종목의 코드가 없습니다."
+            self.textEdit_2.append(self.textch)
+            self.textch = ""
+        else:
+            self.textEdit_2.append(code)
+            #todays=datetime.date.today()
+            todays='2022-12-29'
+            df = fdr.DataReader(str(code), str(todays), str(todays))
+            print(df) #현재 장 정보 확인
+            text1 = df.loc[str(todays),'Open']
+            text1=str(int(text1))
+            self.textEdit_2.append('오픈가: '+text1)
+            text2 = df.loc[str(todays), 'High']
+            text2 = str(int(text2))
+            self.textEdit_2.append('최고가: ' + text2)
+            text3 = df.loc[str(todays), 'Low']
+            text3 = str(int(text3))
+            self.textEdit_2.append('최저가: ' + text3)
+            text4 = df.loc[str(todays), 'Volume']
+            text4 = str(int(text4))
+            self.textEdit_2.append('거래량: ' + text4)
+            text5 = df.loc[str(todays), 'Change']
+            text5 = str(int(text5*100))
+            self.textEdit_2.append('변동율: ' + text5 + ' %')
+
+
+
 
 
 if __name__ == "__main__":

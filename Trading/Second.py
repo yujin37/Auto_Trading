@@ -8,6 +8,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 form_class2 = uic.loadUiType("second.ui")[0]
+#분봉 차트 하는 것도 나중에 수정하기
 #차트 조회 창
 class SecondWindow(QDialog, form_class2):
     def __init__(self):
@@ -25,8 +26,7 @@ class SecondWindow(QDialog, form_class2):
         self.graph_layout.addWidget(self.toolbar)
         self.graph_layout.addWidget(self.canvas)
 
-    def Home(self): #닫는 버튼
-        self.close()
+
     def plot(self): #차트에 그래프 그리기
         text=self.code_num.text()
         start_date=self.dateEdit.text()
