@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+#from PyQt5.QtCore import *
 from PyQt5 import uic, QtCore, QtGui, QtWidgets
 from Kiwoom import *
 import time
@@ -10,54 +10,13 @@ import datetime
 import re
 MARKET_KOSPI = 0
 MARKET_KOSDAQ = 10
-
-#차트 조회를 위한
-import FinanceDataReader as fdr
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from Second import *
 
 
 # ui 파일을 불러오는 코드
 form_class = uic.loadUiType("pytrader.ui")[0]
-form_class2 = uic.loadUiType("second.ui")[0]
-class SecondWindow(QDialog, form_class2):
-    def __init__(self):
-        super(SecondWindow, self).__init__()
-        self.initUI()
-        self.find.clicked.connect(self.plot)
-        self.show()
 
-    def initUI(self):
-        self.setupUi(self)
-        self.fig=plt.Figure()
-        self.canvas = FigureCanvas(self.fig)
-        self.home.clicked.connect(self.Home)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-        self.graph_layout.addWidget(self.toolbar)
-        self.graph_layout.addWidget(self.canvas)
-
-    def Home(self):
-        self.close()
-    def plot(self):
-        text=self.code_num.text()
-        start_date=self.dateEdit.text()
-        end_date=self.dateEdit_2.text()
-        df=fdr.DataReader(text,start_date, end_date)
-
-        ax1 = self.fig.add_subplot(1, 1, 1)
-        self.graph_layout.addWidget(self.canvas) #이건 x, y축이 겹치는 문제 발생
-
-        if self.checkBox.isChecked():
-            ax1.plot(df.index,df['Open'], label='Open', color='blue')
-        if self.checkBox_2.isChecked():
-            ax1.plot(df.index, df['Close'], label='Close', color='red')
-        if self.checkBox_3.isChecked():
-            ax1.plot(df.index, df['High'], label='High', color='green')
-        if self.checkBox_4.isChecked():
-            ax1.plot(df.index, df['Low'], label='Low', color='purple')
-        self.canvas.draw()
-
+#메인 창
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
@@ -77,10 +36,10 @@ class MyWindow(QMainWindow, form_class):
         self.timer2 = QTimer(self)
         self.timer2.start(1000 * 10)
         self.timer2.timeout.connect(self.timeout2)
-
-        self.timer = QTimer(self)
-        self.timer.start(500)
-        self.timer.timeout.connect(self.timeout3)
+        #조건식 타이머
+        self.timer3 = QTimer(self)
+        self.timer3.start(500)
+        self.timer3.timeout.connect(self.timeout3)
 
         accouns_num = int(self.kiwoom.get_login_info("ACCOUNT_CNT"))
         accounts = self.kiwoom.get_login_info("ACCNO")
@@ -96,8 +55,8 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_4.clicked.connect(self.Chart) #차트 조회
         self.pushButton_5.clicked.connect(self.Search) #조건검색 새로고침
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
-        self.pushButton_7.clicked.connect(self.Join_search)
-        self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
+        self.pushButton_7.clicked.connect(self.Join_search) #조건검색 후 주문 적용
+        #self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
 
@@ -292,7 +251,7 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_3.setItem(len(buy_list) + j, i, item)
 
         self.tableWidget_3.resizeRowsToContents()
-    #주문관련 도움
+    #수동주문관련 도움
     def code_changed(self):
         code = self.lineEdit.text()
         name = self.kiwoom.get_master_code_name(code)
@@ -313,9 +272,8 @@ class MyWindow(QMainWindow, form_class):
         self.kiwoom.send_order("send_order_req", "0101", account, order_type_lookup[order_type], code, num, price,
                                hoga_lookup[hoga], "")
 
-    # 시간 처리
+    # 주문하는동안 확인
     def timeout(self):
-        # 여기까지는 진입하는데.....
         market_start_time = QTime(9, 0, 0) #장오픈
         market_end_time = QTime(15, 30, 0) #장마감
         current_time = QTime.currentTime()
@@ -384,11 +342,11 @@ class MyWindow(QMainWindow, form_class):
     def GetCommRealData(self, code, fid):
         data = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, fid)
         return data
-
+    '''
     def _handler_real_data(self, code, real_type, data, real_data):
-        '''OnReceiveRealData()이벤트가 발생될때
-        실행되는 함수 GetCommRealData가 들어가야함
-        '''
+        #OnReceiveRealData()이벤트가 발생될때
+        #실행되는 함수 GetCommRealData가 들어가야함
+        
         print(code, real_type, data)
         ##fid에 따라 real_type이 달라짐
         buy_list = []
@@ -407,6 +365,8 @@ class MyWindow(QMainWindow, form_class):
                 time.sleep(0.5)
                 self.trade_stocks_done = False
                 self.timeout()
+    '''
+    '''
     #과거 데이터 계산 함수, 지금은 버튼 형태, 나중엔 정기적인 호출 혹은 시간되면
     def Count_Volume(self):
         #나중엔 이걸 정기적으로 호출하는데 날짜 기준으로 받아도 될 것 같다.
@@ -434,7 +394,7 @@ class MyWindow(QMainWindow, form_class):
 
                     avg_vol20 = sum_vol20 / 10
 
-                ''' 날짜, 종목코드, 평균거래량 업데이트 '''
+                # 날짜, 종목코드, 평균거래량 업데이트 
                 #test=pd.DataFrame({'날짜': [today],'종목코드':[code],'평균거래량': [avg_vol20]})
                 test = {'날짜': [today], '종목코드': [code], '평균거래량': [avg_vol20]} #데이터 프레임
                 test=pd.DataFrame(test,index=[j]) #기존엔 인덱스가 0번만 되서 일단 번호를 부여하도록
@@ -449,8 +409,10 @@ class MyWindow(QMainWindow, form_class):
 
         else:
             print('현재는 장 시간입니다.')
-    def Chart(self):
+    '''
+    def Chart(self): #차트 조회를 위한 새 창 열기
         self.second=SecondWindow()
+    #조건식 검색
     def Search(self):
         print("pytrader.py [load_condition_list]")
         cond_list=[]
@@ -465,6 +427,7 @@ class MyWindow(QMainWindow, form_class):
             print(e)
 
         #self.kiwoom.sendCondition("0","updown_1",1,1)
+    #조건식 실제 매수매도 진행시 able, enable
     def Join_search(self):
         c_index = self.comboBox_4.currentText().split(';')[0]
         c_name = self.comboBox_4.currentText().split(';')[1]
@@ -474,6 +437,7 @@ class MyWindow(QMainWindow, form_class):
                 self.pushButton_7.setText('해제')
                 self.comboBox_4.setEnabled(False)
                 self.checkBox_2.setEnabled(False)
+                self.checkBox_3.setEnabled(False)
                 print("{} activiated".format(c_name))
             except Exception as e:
                 print(e)
@@ -481,7 +445,9 @@ class MyWindow(QMainWindow, form_class):
             self.kiwoom.sendConditionStop("0",c_name, c_index)
             self.comboBox_4.setEnabled(True)
             self.checkBox_2.setEnabled(True)
+            self.checkBox_3.setEnabled(True)
             self.pushButton_7.setText('적용')
+    #조건식 진행시 사용하는 타임아웃
     def timeout3(self):
         if self.kiwoom.msg:
             self.textEdit.append(self.kiwoom.msg)
@@ -489,12 +455,15 @@ class MyWindow(QMainWindow, form_class):
             get = self.kiwoom.msg_line
             if self.checkBox_2.isChecked():
                 self.update_sell_list(get)
-            else:
+            elif self.checkBox_3.isChecked():
                 self.update_buy_list(get)
+            else:
+                pass
             get.clear()
             time.sleep(0.5)
             self.trade_stocks_done = False
             self.timeout()
+    #조건식 관련해서 출력내용 지우기
     def clear_line(self):
         self.textEdit.clear()
 
