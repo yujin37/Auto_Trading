@@ -12,6 +12,7 @@ import pandas as pd
 MARKET_KOSPI = 0
 MARKET_KOSDAQ = 10
 from Second import *
+from Third import *
 import csv
 
 
@@ -60,6 +61,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_7.clicked.connect(self.Join_search) #조건검색 후 주문 적용
         self.pushButton_8.clicked.connect(self.Code_info)
         self.pushButton_9.clicked.connect(self.check_volume) #과거 데이터 계산
+        self.pushButton_10.clicked.connect(self.Candle) #캔들스틱 차트 창 이동
         self.pushButton_11.clicked.connect(self.percent_buy)
         self.pushButton_12.clicked.connect(self.percent_sell)
 
@@ -621,6 +623,9 @@ class MyWindow(QMainWindow, form_class):
             self.textEdit_3.append("상승장")
         else:
             self.textEdit_3.append("하락장")
+    #캔들 스틱 차트 조회
+    def Candle(self):
+        self.third = ThirdWindow()
 
 
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1327</width>
-    <height>957</height>
+    <height>951</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -567,7 +567,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>바로가기</string>
+      <string>그래프</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_9">
@@ -840,6 +840,19 @@
        <width>81</width>
        <height>21</height>
       </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_10">
+     <property name="geometry">
+      <rect>
+       <x>630</x>
+       <y>100</y>
+       <width>93</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>캔들차트</string>
      </property>
     </widget>
    </widget>

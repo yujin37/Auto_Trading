@@ -21,7 +21,7 @@ class SecondWindow(QDialog, form_class2):
         self.setupUi(self)
         self.fig=plt.Figure()
         self.canvas = FigureCanvas(self.fig)
-        self.home.clicked.connect(self.Home)
+        #self.home.clicked.connect(self.Home)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.graph_layout.addWidget(self.toolbar)
         self.graph_layout.addWidget(self.canvas)
