@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import time
 import pandas as pd
 import sqlite3
+import db
 import re
 
 
@@ -120,10 +121,12 @@ class Kiwoom(QAxWidget):
             self._opw00001(rqname, trcode)
         elif rqname == "opw00018_req":
             self._opw00018(rqname, trcode)
-        '''
-        elif rqname == "opt10075_req":
-            self._opt10075(rqname, trcode)
-        '''
+
+        elif rqname == "opt10080_req":
+            self.opt10080(rqname, trcode)
+
+
+
         try:
             self.tr_event_loop.exit()
         except AttributeError:
@@ -337,6 +340,52 @@ class Kiwoom(QAxWidget):
         if event == "I":
             self.msg_line.append(code)
         self.msg += msg
+    def opt10080(self,rqname, trcode):
+        '''
+        getrepeatcnt = self.dynamicCall("GetRepeatCnt(QString, QSTring)", rqname, trcode)
+        for i in range(getrepeatcnt):
+            item_code = self.GetCommData(rqname, trcode,0, "종목코드").strip()
+            close = self.GetCommData(rqname, trcode, i, "현재가").strip()
+            volume = self.GetCommData(rqname, trcode, i, "거래량").strip()
+            date = self.GetCommData(rqname, trcode, i, "체결시간").strip()
+            open = self.GetCommData(rqname, trcode, i, "시가").strip()
+            high = self.GetCommData(rqname, trcode, i, "고가").strip()
+            low = self.GetCommData(rqname, trcode, i, "저가").strip()
+            trade_volume = int(volume) * int(close)
+            self.min_data = {'date':[], 'open':[], 'high':[], 'low':[], 'close':[], 'volume':[],'trade_volume':[]}
+            self.min_data['date'].append(date)
+            self.min_data['open'].append(open)
+            self.min_data['high'].append(high)
+            self.min_data['low'].append(low)
+            self.min_data['close'].append(close)
+            self.min_data['volume'].append(volume)
+            self.min_data['trade_volume'].append(trade_volume)
+            df_min_data=pd.DataFrame(self.min_data, colums=['date','open', 'high', 'low', 'volume','trade_volume'])
+            print('진입')
+            print(df_min_data)
+        '''
+        data_cnt = self._get_repeat_cnt(trcode, rqname)
+        for i in range(data_cnt):
+            print("분봉 데이터 저장중")
+            day = self._comm_get_data(trcode, "", rqname, i, "체결시간")
+            high = self._comm_get_data(trcode, "", rqname, i, "현재가")
+            low = self._comm_get_data(trcode, "", rqname, i, "저가")
+            if (high[0] == '-'):
+                high = high[1:]
+            if (low[0] == '-'):
+                low = low[1:]
+            self.db.insert_Leve(day, int(high), int(low))
+            # self.db.insert_Leve(day, abs(int(high)), abs(int(low)))
+
+            if day[8:] == "090000":
+                start = self._comm_get_data(trcode, "", rqname, i, "시가")
+                if (start[0] == '-'):
+                    start = start[1:]
+                self.db.insert_Start(day, int(start))
+                # self.db.insert_Start(day,abs(int(start)))
+
+        self.db.con.commit()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

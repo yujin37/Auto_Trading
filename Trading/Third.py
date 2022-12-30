@@ -15,9 +15,11 @@ form_class3 = uic.loadUiType("third.ui")[0]
 class ThirdWindow(QDialog, form_class3):
     def __init__(self):
         super(ThirdWindow, self).__init__()
+        self.kiwoom = Kiwoom()
         self.initUI()
         self.Search.clicked.connect(self.can_graph)
         self.show()
+
     def initUI(self):
         self.setupUi(self)
         self.fig = plt.Figure()
@@ -57,6 +59,22 @@ class ThirdWindow(QDialog, form_class3):
 
     def candle_min(self):
         print("분봉 진입")
+        #self.kiwoom.set_input_value("종목코드", code)
+        #self.kiwoom.comm_rq_data("opt10081_req", "opt10081", 0, "0101")
+        code = self.lineEdit.text()
+        self.kiwoom.set_input_value("종목코드", code)
+        self.kiwoom.set_input_value("틱범위", 1)
+        self.kiwoom.set_input_value("수정주가구분", 0)
+        self.kiwoom.comm_rq_data("opt10080_req", "opt10080", 0, "0102")
+        #result = self.kiwoom.opt10080.min_data
+        #print(result)
+        for i in range(50):
+            time.sleep(0.2)
+            self.set_input_value("종목코드", code)
+            self.set_input_value("틱범위", 1)
+            self.set_input_value("수정주가구분", 0)
+            self.comm_rq_data("opt10080_req", "opt10080", 2, "1999")
+
     def can_graph(self):
         if self.radioButton.isChecked():
             self.candle_day()
