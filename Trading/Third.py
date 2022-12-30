@@ -2,7 +2,6 @@ from PyQt5 import uic
 from matplotlib import ticker
 
 from Kiwoom import *
-import finplot as fplt
 import FinanceDataReader as fdr
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -24,7 +23,6 @@ class ThirdWindow(QDialog, form_class3):
         self.setupUi(self)
         self.fig = plt.Figure()
         self.canvas = FigureCanvas(self.fig)
-        # self.home.clicked.connect(self.Home)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.candle_layout.addWidget(self.toolbar)
         self.candle_layout.addWidget(self.canvas)
@@ -39,10 +37,7 @@ class ThirdWindow(QDialog, form_class3):
         df['MA5'] = df['Close'].rolling(5).mean()
         df['MA10'] = df['Close'].rolling(10).mean()
         df['MA20'] = df['Close'].rolling(20).mean()
-        #print(df)
         ax = self.fig.add_subplot(1, 1, 1)
-        #ax.axes.xaxis.set_visible(False)
-        #ax.axes.yaxis.set_visible(False)
         self.candle_layout.addWidget(self.canvas)  # 이건 x, y축이 겹치는 문제 발생
         index = df.index.astype('str')  # 캔들스틱 x축이 str로 들어감
 
@@ -57,26 +52,7 @@ class ThirdWindow(QDialog, form_class3):
         ax.legend()
         self.canvas.draw()
 
-    def candle_min(self):
-        print("분봉 진입")
-        #self.kiwoom.set_input_value("종목코드", code)
-        #self.kiwoom.comm_rq_data("opt10081_req", "opt10081", 0, "0101")
-        code = self.lineEdit.text()
-        self.kiwoom.set_input_value("종목코드", code)
-        self.kiwoom.set_input_value("틱범위", 1)
-        self.kiwoom.set_input_value("수정주가구분", 0)
-        self.kiwoom.comm_rq_data("opt10080_req", "opt10080", 0, "0102")
-        #result = self.kiwoom.opt10080.min_data
-        #print(result)
-        for i in range(50):
-            time.sleep(0.2)
-            self.set_input_value("종목코드", code)
-            self.set_input_value("틱범위", 1)
-            self.set_input_value("수정주가구분", 0)
-            self.comm_rq_data("opt10080_req", "opt10080", 2, "1999")
 
     def can_graph(self):
         if self.radioButton.isChecked():
             self.candle_day()
-        elif self.radioButton_2.isChecked():
-            self.candle_min()

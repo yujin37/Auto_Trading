@@ -221,9 +221,8 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0) #장오픈
         market_end_time = QTime(15, 30, 0) #장마감
         current_time = QTime.currentTime()
-        #lock = threading.Lock() #스레드 락
+
         if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False: #장시간에만
-        #if current_time > market_start_time and self.trade_stocks_done == False: #이건 실험용
             self.trade_stocks()
             self.trade_stocks_done = True
 
@@ -265,7 +264,6 @@ class MyWindow(QMainWindow, form_class):
         self.tableWidget.setItem(0, 0, item)
         for i in range(1, 6):
             item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
-            # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
             self.tableWidget.setItem(0, i, item)
 
         self.tableWidget.resizeRowsToContents()
@@ -278,7 +276,7 @@ class MyWindow(QMainWindow, form_class):
             row = self.kiwoom.opw00018_output['multi'][j]
             for i in range(len(row)):
                 item = QTableWidgetItem(row[i])
-                # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
@@ -303,7 +301,7 @@ class MyWindow(QMainWindow, form_class):
         except Exception as e:
             print(e)
 
-        #self.kiwoom.sendCondition("0","updown_1",1,1)
+
     #조건식 실제 매수매도 진행시 able, enable
     def Join_search(self):
         c_index = self.comboBox_4.currentText().split(';')[0]
@@ -361,8 +359,20 @@ class MyWindow(QMainWindow, form_class):
             self.textch = ""
         else:
             self.textEdit_2.append(code)
-            #todays=datetime.date.today()
-            todays='2022-12-29'
+
+            weekday=date.today().weekday()
+            days=['월','화','수','목','금','토','일']
+            if weekday==5:
+                todays=date.today()-timedelta(days=1)
+            elif weekday==6:
+                todays = date.today() - timedelta(days=2)
+            else:
+                todays = date.today()
+            todays=str(todays)
+            todays2=datetime.strptime(todays,"%Y-%m-%d")
+            weekday=days[todays2.weekday()]
+            print(todays, weekday)
+            self.textEdit_2.append('오늘의 날짜(장 날짜 기준)\n'+ str(todays) + ' ' + weekday)
             df = fdr.DataReader(str(code), str(todays), str(todays))
             print(df) #현재 장 정보 확인
             text1 = df.loc[str(todays),'Open']
@@ -411,26 +421,20 @@ class MyWindow(QMainWindow, form_class):
         while self.kiwoom.remained_data:
             self.kiwoom.set_input_value("계좌번호", account_number)
             self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
-        #item = QTableWidgetItem(self.kiwoom.d2_deposit)
-        #for i in range(1, 6):
-            #item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
+
 
         item_count = len(self.kiwoom.opw00018_output['multi'])
-        #cnt = 0
         earn=0
         for j in range(item_count):
             row = self.kiwoom.opw00018_output['multi'][j]
-                #print(item) #여기 아이템 확인하고
             if code == row[0]:
                 earn = row[6] #이걸로 접근되면 해서
                 break
-                #earn=0
             else:
                 earn = 0
         if earn == 0:
             print('존재하지 않음.')
             print(code, earn)
-            #earn=0
         else:
 
             if int(percent) <= int(earn): #기준점 넘었으면 현재가로 주문 넣기
@@ -451,7 +455,6 @@ class MyWindow(QMainWindow, form_class):
                 time.sleep(0.5)
                 self.trade_stocks_done = False
                 self.timeout()
-                #print(line)
 
             print('여긴 주문영역')
 
@@ -463,8 +466,7 @@ class MyWindow(QMainWindow, form_class):
         date_cnt = self.lineEdit_10.text()
         #날짜 가져오기
         todays1 = date.today()-timedelta(days=int(date_cnt))
-        todays2 = '2022-12-29'
-        #todays2 = date.today()
+        todays2 = date.today()
         df = fdr.DataReader(str(code), str(todays1), str(todays2))
 
         up = 0 #상승장
