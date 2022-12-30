@@ -6,7 +6,7 @@ from Kiwoom import *
 import time
 # pymon 추가
 from pandas import DataFrame
-import datetime
+from datetime import datetime, timedelta,date
 import re
 import pandas as pd
 MARKET_KOSPI = 0
@@ -59,7 +59,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_6.clicked.connect(self.load_buy_sell_list)  # 자동매매 선정 리스트
         self.pushButton_7.clicked.connect(self.Join_search) #조건검색 후 주문 적용
         self.pushButton_8.clicked.connect(self.Code_info)
-        #self.pushButton_9.clicked.connect(self.Count_Volume) #과거 데이터 계산
+        self.pushButton_9.clicked.connect(self.check_volume) #과거 데이터 계산
         self.pushButton_11.clicked.connect(self.percent_buy)
         self.pushButton_12.clicked.connect(self.percent_sell)
 
@@ -584,6 +584,43 @@ class MyWindow(QMainWindow, form_class):
             print('여긴 주문영역')
 
         print(code, earn)
+
+    #거래량을 이용한 매매 동향 파악 VR(Volume Ratio)
+    def check_volume(self):
+        code = self.lineEdit_6.text()
+        date_cnt = self.lineEdit_10.text()
+        #날짜 가져오기
+        todays1 = date.today()-timedelta(days=int(date_cnt))
+        todays2 = '2022-12-29'
+        #todays2 = date.today()
+        df = fdr.DataReader(str(code), str(todays1), str(todays2))
+
+        up = 0 #상승장
+        down = 0 #하락장
+
+        before = df.iloc[0, 3]
+        sets = df['Close'].count()
+
+        for i in range(1, sets):
+            st = df.iloc[i, 3]
+            if int(before) < int(st):
+                up += int(st)
+            else:
+                down += int(st)
+            before = st
+
+        vr = (up/down)*100
+        vr = round(vr,2)
+        self.textEdit_3.append("결과: " + (str(vr)) + " %")
+
+        if vr >= 350:
+            self.textEdit_3.append("과열 상태. 무리한 매수 금지")
+        elif vr <= 70:
+            self.textEdit_3.append("하락장, 매수 고려")
+        elif vr >= 100:
+            self.textEdit_3.append("상승장")
+        else:
+            self.textEdit_3.append("하락장")
 
 
 
