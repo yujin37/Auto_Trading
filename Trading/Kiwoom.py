@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import time
 import pandas as pd
 import sqlite3
+
 import re
 
 
@@ -98,15 +99,7 @@ class Kiwoom(QAxWidget):
         print(self.get_chejan_data(9203), end=' ') #주문번호
         print(self.get_chejan_data(302), end=' ') #종목명
         print(self.get_chejan_data(900), end=' ') #주문수량
-        '''
-        #매도 준비를 위한 작업
-        type_code=self.get_chejan_data(9001) #종목 코드
-        type_price=self.get_chejan_data(910) #체결 가격
-        f=open('sb_list','at',encoding='utf-8') #매도 파일
-        message='매도;'+type_code+';시장가;10;0;매도전;'+type_price
-        f.write(message)
-        f.close
-        '''
+
 
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':
@@ -120,10 +113,7 @@ class Kiwoom(QAxWidget):
             self._opw00001(rqname, trcode)
         elif rqname == "opw00018_req":
             self._opw00018(rqname, trcode)
-        '''
-        elif rqname == "opt10075_req":
-            self._opt10075(rqname, trcode)
-        '''
+
         try:
             self.tr_event_loop.exit()
         except AttributeError:
@@ -165,7 +155,7 @@ class Kiwoom(QAxWidget):
 
     def _opt10081(self, rqname, trcode):
         data_cnt = self._get_repeat_cnt(trcode, rqname)
-        #print(data_cnt)
+
         for i in range(data_cnt):
             date = self._comm_get_data(trcode, "", rqname, i, "일자")
             open = self._comm_get_data(trcode, "", rqname, i, "시가")
@@ -173,14 +163,14 @@ class Kiwoom(QAxWidget):
             low = self._comm_get_data(trcode, "", rqname, i, "저가")
             close = self._comm_get_data(trcode, "", rqname, i, "현재가")
             volume = self._comm_get_data(trcode, "", rqname, i, "거래량")
-            #print('여기')
+
             self.ohlcv['date'].append(date)
             self.ohlcv['open'].append(int(open))
             self.ohlcv['high'].append(int(high))
             self.ohlcv['low'].append(int(low))
             self.ohlcv['close'].append(int(close))
             self.ohlcv['volume'].append(int(volume))
-            #print(self.ohlcv)
+
 
     def reset_opw00018_output(self):
         self.opw00018_output = {'single': [], 'multi': []}
@@ -215,7 +205,6 @@ class Kiwoom(QAxWidget):
             codess=re.sub(",","",codes)
             codess=codess.zfill(6)
             codes=codess
-            #print(codes)
             name = self._comm_get_data(trcode, "", rqname, i, "종목명")
             quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
             purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
@@ -223,7 +212,6 @@ class Kiwoom(QAxWidget):
             eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
             earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
 
-            #codes=Kiwoom.change_format(codes)
             quantity = Kiwoom.change_format(quantity)
             purchase_price = Kiwoom.change_format(purchase_price)
             current_price = Kiwoom.change_format(current_price)
@@ -231,8 +219,7 @@ class Kiwoom(QAxWidget):
             earning_rate = Kiwoom.change_format2(earning_rate)
 
             self.opw00018_output['multi'].append([codes,name, quantity, purchase_price, current_price, eval_profit_loss_price,earning_rate])
-    #미체결 현황 관련 코드, notTrade함수와 연결됨.
-    #def _opt10075(self,rqname,trcode):
+
 
 
     def _opt10006(self,code):
@@ -337,6 +324,7 @@ class Kiwoom(QAxWidget):
         if event == "I":
             self.msg_line.append(code)
         self.msg += msg
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

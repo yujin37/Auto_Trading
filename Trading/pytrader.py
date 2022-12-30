@@ -67,8 +67,6 @@ class MyWindow(QMainWindow, form_class):
 
         self.load_buy_sell_list()  # 기본적인 자동매매 선정리스트 세팅
 
-        #self.kiwoom.OnReceiveTrCondition.connect(self.OnReceiveTrCondition)
-        #self.kiwoom.OnReceiveConditionVer.connect(self.OnReceiveConditionVer)
 
         self.textch=""
 
@@ -88,42 +86,7 @@ class MyWindow(QMainWindow, form_class):
         df = DataFrame(self.kiwoom.ohlcv, columns=['open', 'high', 'low', 'close', 'volume'],
                        index=self.kiwoom.ohlcv['date'])
         return df
-    '''
-    #매도 알고리즘
-    def check_up(self):
-        self.kiwoom.reset_opw00018_output()
-        account_number = self.kiwoom.get_login_info("ACCNO")
-        account_number = account_number.split(';')[0]
 
-        self.kiwoom.set_input_value("계좌번호", account_number)
-        self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-        while self.kiwoom.remained_data:
-            self.kiwoom.set_input_value("계좌번호", account_number)
-            self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
-        item_count = len(self.kiwoom.opw00018_output['multi'])
-
-        sell_list = []
-        sell_lists = []
-        for j in range(item_count): #이건 아이템 전체 줄
-            row = self.kiwoom.opw00018_output['multi'][j]#여기는 각 줄에 대한 내용
-            type_code = row[0]
-            name = row[1] #종목명
-            profit = row[6] #수익률
-
-            #if float(profit)>(5.0): #이건 작동 여부 위해서 설정한 거고 필요에 따라 변경
-
-            sell_list.append(type_code)
-        for i in sell_list: #이 주식 번호에서 쉼표 제거 부분
-            n = re.sub(",", "", i)
-            n=n.zfill(6)
-            sell_lists.append(n)
-
-        self.update_sell_list(sell_lists)
-        time.sleep(0.5)
-        self.trade_stocks_done = False
-        self.timeout()
-        return True
-    '''
     def update_buy_list(self, buy_list):
         f = open("buy_list.txt", "a+", encoding='utf-8')
         for code in buy_list:
@@ -136,33 +99,7 @@ class MyWindow(QMainWindow, form_class):
             line = "매도;" + code + ";시장가;1;0;매도전" + "\n"
             f.writelines(line)
         f.close()
-    '''
-    #이건 기존 매수매도 알고리즘
-    def auto_run(self):
-        buy_list = []
-        num = len(self.kosdaq_codes)
-        # sell_list = []
-        for i, code in enumerate(self.kosdaq_codes):
-            print(i, '/', num)
-            print(code)
-            # 매수 알고리즘
-            if self.check_speedy_rising_volume(code):
-                buy_list.append(code)
-                # 확인 차원 출력, 나중에 삭제 예정
-                print("급등주: ", code)
-                self.update_buy_list(buy_list)
-                time.sleep(0.5)
-                self.trade_stocks_done = False
-                self.timeout()
-            buy_list.clear()
-            #time.sleep(3.6)
-            #self.check_up()
-            # 매도 알고리즘
-            #if self.check_up():
-            #    print("여기")  # 이것도 실행 되는지 보려고
 
-            time.sleep(3.6)
-    '''
     # 트레이딩 관련 텍스트 파일 읽어주기
     def trade_stocks(self):
         # print('here1')
@@ -284,9 +221,8 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0) #장오픈
         market_end_time = QTime(15, 30, 0) #장마감
         current_time = QTime.currentTime()
-        #lock = threading.Lock() #스레드 락
+
         if current_time > market_start_time and current_time<market_end_time and self.trade_stocks_done == False: #장시간에만
-        #if current_time > market_start_time and self.trade_stocks_done == False: #이건 실험용
             self.trade_stocks()
             self.trade_stocks_done = True
 
@@ -328,7 +264,6 @@ class MyWindow(QMainWindow, form_class):
         self.tableWidget.setItem(0, 0, item)
         for i in range(1, 6):
             item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
-            # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
             self.tableWidget.setItem(0, i, item)
 
         self.tableWidget.resizeRowsToContents()
@@ -341,7 +276,7 @@ class MyWindow(QMainWindow, form_class):
             row = self.kiwoom.opw00018_output['multi'][j]
             for i in range(len(row)):
                 item = QTableWidgetItem(row[i])
-                # item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
@@ -349,74 +284,7 @@ class MyWindow(QMainWindow, form_class):
     def GetCommRealData(self, code, fid):
         data = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, fid)
         return data
-    '''
-    def _handler_real_data(self, code, real_type, data, real_data):
-        #OnReceiveRealData()이벤트가 발생될때
-        #실행되는 함수 GetCommRealData가 들어가야함
-        
-        print(code, real_type, data)
-        ##fid에 따라 real_type이 달라짐
-        buy_list = []
-        if real_type == "주식호가잔량":
-            self.comp_vol = self.GetCommRealData(code, 13)
-            print(self.comp_vol)
 
-            avg_vol = self.cal_df.loc[[code], ['평균 주식거래량']]
-
-            if self.check_kosdaq_cal and self.comp_vol > avg_vol:
-                print("급등" + self.vol)
-                buy_list.append(code)
-                # 확인 차원 출력, 나중에 삭제 예정
-                print("급등주: ", code)
-                self.update_buy_list(buy_list)
-                time.sleep(0.5)
-                self.trade_stocks_done = False
-                self.timeout()
-    '''
-    '''
-    #과거 데이터 계산 함수, 지금은 버튼 형태, 나중엔 정기적인 호출 혹은 시간되면
-    def Count_Volume(self):
-        #나중엔 이걸 정기적으로 호출하는데 날짜 기준으로 받아도 될 것 같다.
-        market_start_time = QTime(9, 0, 0)  # 장오픈
-        market_end_time = QTime(15, 30, 0)  # 장마감
-        current_time = QTime.currentTime()
-        if current_time > market_end_time or current_time < market_start_time:
-            print('현재는 과거 데이터 계산 시간입니다.')
-            for j in range(len(self.kosdaq_codes)):
-                code=self.kosdaq_codes[j] #종목 코드 얻기
-
-                today = datetime.datetime.today().strftime("%Y%m%d")
-                df=self.get_ohlcv(code,today)
-                volumes=df['volume']
-                if len(volumes) > 11:
-                    sum_vol20 = 0
-
-                    for i, vol in enumerate(volumes):
-                        if i == 0:
-                            today_vol = vol
-                        elif 1 <= i <= 10:
-                            sum_vol20 += vol
-                        else:
-                            break
-
-                    avg_vol20 = sum_vol20 / 10
-
-                # 날짜, 종목코드, 평균거래량 업데이트 
-                #test=pd.DataFrame({'날짜': [today],'종목코드':[code],'평균거래량': [avg_vol20]})
-                test = {'날짜': [today], '종목코드': [code], '평균거래량': [avg_vol20]} #데이터 프레임
-                test=pd.DataFrame(test,index=[j]) #기존엔 인덱스가 0번만 되서 일단 번호를 부여하도록
-                print(test) #확인용, 후에 삭제 예정
-                test.to_csv("counting.csv",mode='a', header=False) #csv파일로 저장
-                #나중에 counting.csv 파일 읽어서 하기, 라인 패스할 필요 없음
-                time.sleep(3.6)
-
-            print('여기까지는 계산')
-
-
-
-        else:
-            print('현재는 장 시간입니다.')
-    '''
     def Chart(self): #차트 조회를 위한 새 창 열기
         self.second=SecondWindow()
     #조건식 검색
@@ -433,7 +301,7 @@ class MyWindow(QMainWindow, form_class):
         except Exception as e:
             print(e)
 
-        #self.kiwoom.sendCondition("0","updown_1",1,1)
+
     #조건식 실제 매수매도 진행시 able, enable
     def Join_search(self):
         c_index = self.comboBox_4.currentText().split(';')[0]
@@ -491,8 +359,20 @@ class MyWindow(QMainWindow, form_class):
             self.textch = ""
         else:
             self.textEdit_2.append(code)
-            #todays=datetime.date.today()
-            todays='2022-12-29'
+
+            weekday=date.today().weekday()
+            days=['월','화','수','목','금','토','일']
+            if weekday==5:
+                todays=date.today()-timedelta(days=1)
+            elif weekday==6:
+                todays = date.today() - timedelta(days=2)
+            else:
+                todays = date.today()
+            todays=str(todays)
+            todays2=datetime.strptime(todays,"%Y-%m-%d")
+            weekday=days[todays2.weekday()]
+            print(todays, weekday)
+            self.textEdit_2.append('오늘의 날짜(장 날짜 기준)\n'+ str(todays) + ' ' + weekday)
             df = fdr.DataReader(str(code), str(todays), str(todays))
             print(df) #현재 장 정보 확인
             text1 = df.loc[str(todays),'Open']
@@ -541,26 +421,20 @@ class MyWindow(QMainWindow, form_class):
         while self.kiwoom.remained_data:
             self.kiwoom.set_input_value("계좌번호", account_number)
             self.kiwoom.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
-        #item = QTableWidgetItem(self.kiwoom.d2_deposit)
-        #for i in range(1, 6):
-            #item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
+
 
         item_count = len(self.kiwoom.opw00018_output['multi'])
-        #cnt = 0
         earn=0
         for j in range(item_count):
             row = self.kiwoom.opw00018_output['multi'][j]
-                #print(item) #여기 아이템 확인하고
             if code == row[0]:
                 earn = row[6] #이걸로 접근되면 해서
                 break
-                #earn=0
             else:
                 earn = 0
         if earn == 0:
             print('존재하지 않음.')
             print(code, earn)
-            #earn=0
         else:
 
             if int(percent) <= int(earn): #기준점 넘었으면 현재가로 주문 넣기
@@ -581,7 +455,6 @@ class MyWindow(QMainWindow, form_class):
                 time.sleep(0.5)
                 self.trade_stocks_done = False
                 self.timeout()
-                #print(line)
 
             print('여긴 주문영역')
 
@@ -593,8 +466,7 @@ class MyWindow(QMainWindow, form_class):
         date_cnt = self.lineEdit_10.text()
         #날짜 가져오기
         todays1 = date.today()-timedelta(days=int(date_cnt))
-        todays2 = '2022-12-29'
-        #todays2 = date.today()
+        todays2 = date.today()
         df = fdr.DataReader(str(code), str(todays1), str(todays2))
 
         up = 0 #상승장
@@ -626,8 +498,6 @@ class MyWindow(QMainWindow, form_class):
     #캔들 스틱 차트 조회
     def Candle(self):
         self.third = ThirdWindow()
-
-
 
 
 

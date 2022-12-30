@@ -131,19 +131,6 @@
      <string>일봉</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="radioButton_2">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>150</y>
-      <width>108</width>
-      <height>19</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>분봉(1분봉)</string>
-    </property>
-   </widget>
   </widget>
  </widget>
  <resources/>
