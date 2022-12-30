@@ -7,6 +7,7 @@ import pandas as pd
 import sqlite3
 import re
 
+
 TR_REQ_TIME_INTERVAL = 0.2
 
 
@@ -15,6 +16,9 @@ class Kiwoom(QAxWidget):
         super().__init__()
         self._create_kiwoom_instance()
         self._set_signal_slots()
+        self.msg=""
+        self.msg_line=[]
+        self.condition = {}
 
 
     def _create_kiwoom_instance(self):
@@ -24,6 +28,10 @@ class Kiwoom(QAxWidget):
         self.OnEventConnect.connect(self._event_connect)
         self.OnReceiveTrData.connect(self._receive_tr_data)
         self.OnReceiveChejanData.connect(self._receive_chejan_data)
+
+        self.OnReceiveConditionVer.connect(self.receiveConditionVer)
+        self.OnReceiveTrCondition.connect(self.receiveTrCondition)
+        self.OnReceiveRealCondition.connect(self.receiveRealCondition)
 
     def comm_connect(self):
         self.dynamicCall("CommConnect()")
@@ -231,6 +239,105 @@ class Kiwoom(QAxWidget):
         self.kiwoom.SetInputValue("종목코드", code)
         self.kiwoom.CommRqData("OPT10006", "OPT10006", 0, "0101")
         return self.kiwoom.ret_data['OPT10006']
+
+    def GetConditionLoad(self):
+        print("[getConditionLoad]")
+        isLoad=self.dynamicCall("GetConditionLoad()")
+        if not isLoad:
+            print("조건식 요청 실패")
+        self.conditionLoop=QEventLoop()
+        self.conditionLoop.exec_()
+    def getConditionNameList(self):
+        print("[getConditionNameList]")
+        data = self.dynamicCall("GetConditionNameList()")
+
+        if data == "":
+            print("getConditionNameList(): 사용자 조건식이 없습니다.")
+
+        conditionList = data.split(';')
+        del conditionList[-1]
+
+        conditionDictionary = {}
+
+        for condition in conditionList:
+            key, value = condition.split('^')
+            conditionDictionary[int(key)] = value
+
+        return conditionDictionary
+
+    def sendCondition(self, screenNo, conditionName, conditionIndex, isRealTime):
+        print("[sendCondition]")
+        msg = "{} 실행\n".format(conditionName)
+        self.msg += msg
+
+        isRequest = self.dynamicCall("SendCondition(QString, QString, int, int",
+                                     screenNo, conditionName, conditionIndex, isRealTime)
+
+        if not isRequest:
+            print("sendCondition(): 조건검색 요청 실패")
+            self.msg+="조건검색 요청 실패"
+
+        # receiveTrCondition() 이벤트 메서드에서 루프 종료
+        self.conditionLoop = QEventLoop()
+        self.conditionLoop.exec_()
+
+    def sendConditionStop(self, screenNo, conditionName, conditionIndex):
+        msg = "{} 중지\n".format(conditionName)
+        self.msg += msg
+
+        print("[sendConditionStop]")
+        """ 종목 조건검색 중지 메서드 """
+
+        self.dynamicCall("SendConditionStop(QString, QString, int)", screenNo, conditionName, conditionIndex)
+
+    def receiveConditionVer(self, receive, msg):
+        print("[receiveConditionVer]")
+        try:
+            if not receive:
+                return
+
+            self.condition = self.getConditionNameList()
+            print("조건식 개수: ", len(self.condition))
+
+            for key in self.condition.keys():
+                print("조건식: ", key, ": ", self.condition[key])
+                # print("key type: ", type(key))
+
+        except Exception as e:
+            print(e)
+
+        finally:
+            self.conditionLoop.exit()
+
+    def receiveTrCondition(self, screenNo, codes, conditionName, conditionIndex, inquiry):
+        print("[receiveTrCondition]")
+        try:
+            if codes == "":
+                return
+            msg=""
+            codeList = codes.split(';')
+            del codeList[-1]
+
+            print(codeList)
+            print("종목개수: ", len(codeList))
+
+            for code in codeList:
+                msg += "{} {}\n".format(code, self.get_master_code_name(code))
+                self.msg_line.append(code)
+            self.msg += msg
+
+        finally:
+            self.conditionLoop.exit()
+    def receiveRealCondition(self, code, event, conditionName, conditionIndex):
+        print("[receiveRealCondition]")
+
+        print("종목코드: {}, 종목명: {}".format(code, self.get_master_code_name(code)))
+        print("이벤트: ", "종목편입" if event == "I" else "종목이탈")
+        msg = "{} {} {}\n".format("종목편입" if event == "I" else "종목이탈", code, self.get_master_code_name(code))
+        if event == "I":
+            self.msg_line.append(code)
+        self.msg += msg
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     kiwoom = Kiwoom()
