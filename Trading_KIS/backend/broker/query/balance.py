@@ -1,19 +1,12 @@
-from broker import key, secret, acc_token,acc_no
+from broker import acc_no
+from broker.query import headers
 import requests
 import json
 #잔고 조회
 balance_num, balance_code = acc_no.split('-')
 
 balance_url = "/uapi/domestic-stock/v1/trading/inquire-balance"
-headers = {
-    "content-type": "application/json",
-    "authorization": f"Bearer {acc_token}",
-    "appkey": key,
-    "appsecret": secret,
-    "tr_id": "VTTC8434R",
-    
-    
-}
+
 
 body = {
     "CANO": balance_num,
